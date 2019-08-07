@@ -52,9 +52,15 @@ public struct CodeCov: Decodable {
         }
     }
 
-    public enum AggregateProperty: String, RawRepresentable {
+    public enum AggregateProperty: String, RawRepresentable, CaseIterable {
         case lines
         case functions
         case instantiations
+    }
+}
+
+extension CodeCov.AggregateProperty: CustomStringConvertible {
+    public var description: String {
+        return self.rawValue
     }
 }

@@ -7,26 +7,26 @@ let package = Package(
     name: "swift-test-codecov",
     products: [
         .executable(name: "swift-test-codecov", targets: ["swift-test-codecov"]),
-        .library(name: "swiftTestCodecovLib", targets: ["swiftTestCodecovLib"])
+        .library(name: "SwiftTestCodecovLib", targets: ["SwiftTestCodecovLib"])
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
-        // .package(url: /* package url */, from: "1.0.0"),
+        .package(url: "https://github.com/jakeheis/SwiftCLI", from: "5.3.2"),
+        .package(url: "https://github.com/mattpolzin/TextTable.git", .branch("swift-5"))
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "swift-test-codecov",
-            dependencies: ["swiftTestCodecovLib"]),
+            dependencies: ["SwiftTestCodecovLib", "SwiftCLI", "TextTable"]),
         .testTarget(
             name: "swift-test-codecovTests",
             dependencies: ["swift-test-codecov"]),
         .target(
-            name: "swiftTestCodecovLib",
+            name: "SwiftTestCodecovLib",
             dependencies: []),
         .testTarget(
-            name: "swiftTestCodecovLibTests",
-            dependencies: ["swiftTestCodecovLib"])
+            name: "SwiftTestCodecovLibTests",
+            dependencies: ["SwiftTestCodecovLib"])
     ]
 )
