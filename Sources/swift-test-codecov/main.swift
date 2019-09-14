@@ -44,7 +44,7 @@ class StatsCommand: Command {
         print("Overall Coverage: \(String(format: "%.2f", overallCoveragePercent))%")
         print("")
 
-        typealias CoveragePair = (filename: String, coverage: Int)
+        typealias CoveragePair = (filename: String, coverage: Double)
 
         let fileCoverages: [CoveragePair] = coveragePerFile.map {
             (filename: URL(fileURLWithPath: $0.key).lastPathComponent,
@@ -64,7 +64,7 @@ class StatsCommand: Command {
         let table = TextTable<CoveragePair> {
             return [
                 Column(title: "File", value: $0.filename),
-                Column(title: "Coverage", value: "\($0.coverage)%")
+                Column(title: "Coverage", value: "\(String(format: "%.2f", $0.coverage))%")
             ]
         }
 

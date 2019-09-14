@@ -48,7 +48,7 @@ public struct CodeCov: Decodable {
         public struct Coverage: Decodable {
             public let count: Int
             public let covered: Int
-            public let percent: Int
+            public let percent: Double
         }
     }
 
