@@ -12,6 +12,11 @@ class StatsCommand: Command {
     let metric = Key<CodeCov.AggregateProperty>("-m",
                                                 "--metric",
                                                 description: "The metric over which to aggregate. Options are \(CodeCov.AggregateProperty.allCases)")
+    let minimumCoverage = Key<Int>("-v",
+                                   "--minimum",
+                                   description: "The minimum coverage allowed. If set, coverage below the minimum will result in exit code 1.",
+                                   validation: [.within(0...100)])
+
     let printTable = Flag("-t", "--table",
                      description: "Prints an ascii table of coverage numbers.",
                      defaultValue: false)
@@ -23,6 +28,7 @@ class StatsCommand: Command {
         let jsonDecoder = JSONDecoder()
 
         let aggProperty: CodeCov.AggregateProperty = metric.value ?? .lines
+        let minimumCov = minimumCoverage.value ?? 0
 
         let data = try! Data(contentsOf: URL(fileURLWithPath: codecovFile.value))
 
@@ -48,12 +54,19 @@ class StatsCommand: Command {
 
         let overallCoveragePercent = overallCoverage * 100
 
+        let formattedOverallPercent = "\(String(format: "%.2f", overallCoveragePercent))%"
+
+        guard overallCoveragePercent > Double(minimumCov) else {
+            print("The overall coverage (\(formattedOverallPercent)) did not meet the minimum threshold: \(minimumCov)%")
+            exit(1)
+        }
+
         guard printTable.value else {
-            print("\(String(format: "%.2f", overallCoveragePercent))%")
+            print(formattedOverallPercent)
             return
         }
 
-        print("Overall Coverage: \(String(format: "%.2f", overallCoveragePercent))%")
+        print("Overall Coverage: \(formattedOverallPercent)")
         print("")
 
         typealias CoverageTriple = (dependency: Bool, filename: String, coverage: Double)
