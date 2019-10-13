@@ -12,9 +12,13 @@ class StatsCommand: Command {
     let metric = Key<CodeCov.AggregateProperty>("-m",
                                                 "--metric",
                                                 description: "The metric over which to aggregate. Options are \(CodeCov.AggregateProperty.allCases)")
-    let table = Flag("-t", "--table",
+    let printTable = Flag("-t", "--table",
                      description: "Prints an ascii table of coverage numbers.",
                      defaultValue: false)
+
+    let includeDependencies = Flag("-d", "--dependencies",
+                            description: "Include dependencies in code coverage calculation. False by default.",
+                            defaultValue: false)
     func execute() throws {
         let jsonDecoder = JSONDecoder()
 
@@ -24,7 +28,15 @@ class StatsCommand: Command {
 
         let codeCoverage = try! jsonDecoder.decode(CodeCov.self, from: data)
 
-        let coveragePerFile = codeCoverage.fileCoverages(for: aggProperty)
+        func isDependencyPath(_ path: String) -> Bool {
+            return path.contains(".build/")
+        }
+
+        let coveragePerFile = codeCoverage
+            .fileCoverages(for: aggProperty)
+            .filter { filename, _ in
+                includeDependencies.value ? true : !isDependencyPath(filename)
+        }
 
         let totalCountOfProperty = coveragePerFile.reduce(0, {tot, next in
             tot + next.value.count
@@ -36,7 +48,7 @@ class StatsCommand: Command {
 
         let overallCoveragePercent = overallCoverage * 100
 
-        guard table.value else {
+        guard printTable.value else {
             print("\(String(format: "%.2f", overallCoveragePercent))%")
             return
         }
@@ -44,15 +56,18 @@ class StatsCommand: Command {
         print("Overall Coverage: \(String(format: "%.2f", overallCoveragePercent))%")
         print("")
 
-        typealias CoveragePair = (filename: String, coverage: Double)
+        typealias CoverageTriple = (dependency: Bool, filename: String, coverage: Double)
 
-        let fileCoverages: [CoveragePair] = coveragePerFile.map {
-            (filename: URL(fileURLWithPath: $0.key).lastPathComponent,
-             coverage: $0.value.percent)
+        let fileCoverages: [CoverageTriple] = coveragePerFile.map {
+            (
+                dependency: isDependencyPath($0.key),
+                filename: URL(fileURLWithPath: $0.key).lastPathComponent,
+                coverage: $0.value.percent
+            )
         }.sorted { $0.filename < $1.filename }
 
-        var sourceCoverages = [CoveragePair]()
-        var testCoverages = [CoveragePair]()
+        var sourceCoverages = [CoverageTriple]()
+        var testCoverages = [CoverageTriple]()
         for fileCoverage in fileCoverages {
             if fileCoverage.filename.contains("Tests") {
                 testCoverages.append(fileCoverage)
@@ -61,13 +76,15 @@ class StatsCommand: Command {
             }
         }
 
-        let table = TextTable<CoveragePair> {
+        let table = TextTable<CoverageTriple> {
             return [
+                self.includeDependencies.value
+                    ? Column(title: "Dependency?", value: $0.dependency ? "✓" : "", align: .center)
+                    : nil,
                 Column(title: "File", value: $0.filename),
                 Column(title: "Coverage", value: "\(String(format: "%.2f", $0.coverage))%")
-            ]
+                ].compactMap { $0 }
         }
-
 
         table.print(sourceCoverages, style: Simple.self)
         table.print(testCoverages, style: Simple.self)
