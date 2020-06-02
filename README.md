@@ -24,9 +24,5 @@ OPTIONS:
   -h, --help              Show help information.
 ```
 
-`<path-to-codecov-json>` is the location of the JSON file output by `swift test --enable-code-coverage`. You will find this in the build directory.
-
-For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
-
 ## Building Docker Image
 Run `docker build -t swift-test-codecov .` to build the docker image.
