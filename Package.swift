@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "SwiftTestCodecovLib", targets: ["SwiftTestCodecovLib"])
     ],
     dependencies: [
-        .package(url: "https://github.com/jakeheis/SwiftCLI", from: "5.3.2"),
+        .package(url: "https://github.com/apple/swift-argument-parser", .exact("0.0.6")),
         .package(url: "https://github.com/mattpolzin/TextTable.git", .branch("swift-5"))
     ],
     targets: [
@@ -18,7 +18,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "swift-test-codecov",
-            dependencies: ["SwiftTestCodecovLib", "SwiftCLI", "TextTable"]),
+            dependencies: ["SwiftTestCodecovLib", "ArgumentParser", "TextTable"]),
         .testTarget(
             name: "swift-test-codecovTests",
             dependencies: ["swift-test-codecov"]),

@@ -1,36 +1,75 @@
 
 import Foundation
 import SwiftTestCodecovLib
-import SwiftCLI
+import ArgumentParser
 import TextTable
 
-extension CodeCov.AggregateProperty: ConvertibleFromString {}
+extension CodeCov.AggregateProperty: ExpressibleByArgument {}
 
-class StatsCommand: Command {
-    let name = "stats"
-    let codecovFile = Parameter()
-    let metric = Key<CodeCov.AggregateProperty>("-m",
-                                                "--metric",
-                                                description: "The metric over which to aggregate. Options are \(CodeCov.AggregateProperty.allCases)")
-    let minimumCoverage = Key<Int>("-v",
-                                   "--minimum",
-                                   description: "The minimum coverage allowed. If set, coverage below the minimum will result in exit code 1.",
-                                   validation: [.within(0...100)])
+let codecovFileDiscussion = """
+You will find this in the build directory.
 
-    let printTable = Flag("-t", "--table",
-                     description: "Prints an ascii table of coverage numbers.",
-                     defaultValue: false)
+For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
+"""
 
-    let includeDependencies = Flag("-d", "--dependencies",
-                            description: "Include dependencies in code coverage calculation. False by default.",
-                            defaultValue: false)
-    func execute() throws {
+struct StatsCommand: ParsableCommand {
+    static let configuration: CommandConfiguration = .init(
+        commandName: "swift-test-codecov",
+        abstract: "Analyze Code Coverage Metrics",
+        discussion: "Ingest Code Coverage Metrics provided by `swift test --enable-code-coverage` and provide some high level analysis."
+    )
+
+    @Argument(
+        help: ArgumentHelp(
+            "the location of the JSON file output by `swift test --enable-code-coverage`.",
+            discussion: codecovFileDiscussion,
+            valueName: "codecov-filepath"
+        )
+    )
+    var codecovFile: String
+
+    @Option(
+        name: [.long, .short],
+        default: .lines,
+        help: ArgumentHelp("The metric over which to aggregate. One of \(CodeCov.AggregateProperty.allCases.map(\.rawValue))")
+    )
+    var metric: CodeCov.AggregateProperty
+
+    @Option(
+        name: [.customLong("minimum"), .customShort("v")],
+        default: 0,
+        help: ArgumentHelp(
+            "The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
+            valueName: "minimum-coverage"
+        )
+    )
+    var minimumCoverage: Int
+
+    @Flag(
+        name: [.customLong("table"), .customShort("t")],
+        help: ArgumentHelp("Prints an ascii table of coverage numbers.")
+    )
+    var printTable: Bool
+
+    @Flag(
+        name: [.customLong("dependencies"), .customShort("d")],
+        help: ArgumentHelp("Include dependencies in code coverage calculation.")
+    )
+    var includeDependencies: Bool
+
+    func validate() throws {
+        guard (0...100).contains(minimumCoverage) else {
+            throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
+        }
+    }
+
+    func run() throws {
         let jsonDecoder = JSONDecoder()
 
-        let aggProperty: CodeCov.AggregateProperty = metric.value ?? .lines
-        let minimumCov = minimumCoverage.value ?? 0
+        let aggProperty: CodeCov.AggregateProperty = metric
+        let minimumCov = minimumCoverage
 
-        let data = try! Data(contentsOf: URL(fileURLWithPath: codecovFile.value))
+        let data = try! Data(contentsOf: URL(fileURLWithPath: codecovFile))
 
         let codeCoverage = try! jsonDecoder.decode(CodeCov.self, from: data)
 
@@ -41,7 +80,7 @@ class StatsCommand: Command {
         let coveragePerFile = codeCoverage
             .fileCoverages(for: aggProperty)
             .filter { filename, _ in
-                includeDependencies.value ? true : !isDependencyPath(filename)
+                includeDependencies ? true : !isDependencyPath(filename)
         }
 
         let totalCountOfProperty = coveragePerFile.reduce(0, {tot, next in
@@ -57,11 +96,11 @@ class StatsCommand: Command {
         let formattedOverallPercent = "\(String(format: "%.2f", overallCoveragePercent))%"
 
         guard overallCoveragePercent > Double(minimumCov) else {
-            print("The overall coverage (\(formattedOverallPercent)) did not meet the minimum threshold: \(minimumCov)%")
-            exit(1)
+            print("The overall coverage (\(formattedOverallPercent)) did not meet the minimum threshold of \(minimumCov)%")
+            throw ExitCode.failure
         }
 
-        guard printTable.value else {
+        guard printTable else {
             print(formattedOverallPercent)
             return
         }
@@ -88,21 +127,20 @@ class StatsCommand: Command {
                 sourceCoverages.append(fileCoverage)
             }
         }
+        let dividerTriple: CoverageTriple = (false, "=-=-=-=-=-=-=-=-=", -1)
 
         let table = TextTable<CoverageTriple> {
             return [
-                self.includeDependencies.value
+                self.includeDependencies
                     ? Column(title: "Dependency?", value: $0.dependency ? "✓" : "", align: .center)
                     : nil,
                 Column(title: "File", value: $0.filename),
-                Column(title: "Coverage", value: "\(String(format: "%.2f", $0.coverage))%")
+                Column(title: "Coverage", value: $0.coverage >= 0 ? "\(String(format: "%.2f", $0.coverage))%" : "")
                 ].compactMap { $0 }
         }
 
-        table.print(sourceCoverages, style: Simple.self)
-        table.print(testCoverages, style: Simple.self)
+        table.print(sourceCoverages + [dividerTriple] + testCoverages, style: Simple.self)
     }
 }
 
-let codecovCLI = CLI(singleCommand: StatsCommand())
-let _ = codecovCLI.go()
+StatsCommand.main()
