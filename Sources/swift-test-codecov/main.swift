@@ -31,7 +31,7 @@ struct StatsCommand: ParsableCommand {
     @Option(
         name: [.long, .short],
         default: .lines,
-        help: ArgumentHelp("The metric over which to aggregate. One of \(CodeCov.AggregateProperty.allCases.map(\.rawValue))")
+        help: ArgumentHelp("The metric over which to aggregate. One of \(CodeCov.AggregateProperty.allCases.map { $0.rawValue })")
     )
     var metric: CodeCov.AggregateProperty
 
