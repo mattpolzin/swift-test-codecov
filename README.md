@@ -1,10 +1,14 @@
 # swift-test-codecov
 
-At the moment this script just prints out one percentage: The total code coverage by line of the first set of files found in the codecov report.
-
 I'm writing this because tooling that can ingest the code coverage report produced by `swift test --enable-code-coverage` is shockingly hard to find.
 
 ## Usage
+
+### Library
+
+The library has a pretty small and straight forward interface. I have not had time to write about it here in the README, but taking a look at how the executable target uses the library target should be pretty informative.
+
+### Tool
 
 ```
 swift-test-codecov <codecov-filepath> [--metric <metric>] [--minimum <minimum-coverage>] [--table] [--dependencies]
