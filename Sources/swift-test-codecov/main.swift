@@ -1,7 +1,7 @@
 
+import ArgumentParser
 import Foundation
 import SwiftTestCodecovLib
-import ArgumentParser
 import TextTable
 
 extension CodeCov.AggregateProperty: ExpressibleByArgument {}
@@ -30,35 +30,36 @@ struct StatsCommand: ParsableCommand {
 
     @Option(
         name: [.long, .short],
-        default: .lines,
-        help: ArgumentHelp("The metric over which to aggregate. One of \(CodeCov.AggregateProperty.allCases.map { $0.rawValue })")
+        // default: .lines,
+        help: ArgumentHelp("The metric over which to aggregate. One of "
+            + CodeCov.AggregateProperty.allCases.map { $0.rawValue }.joined(separator: ", "))
     )
-    var metric: CodeCov.AggregateProperty
+    var metric: CodeCov.AggregateProperty = .lines
 
     @Option(
         name: [.customLong("minimum"), .customShort("v")],
-        default: 0,
+        // default: 0,
         help: ArgumentHelp(
             "The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
             valueName: "minimum-coverage"
         )
     )
-    var minimumCoverage: Int
+    var minimumCoverage: Int = 0
 
     @Flag(
         name: [.customLong("table"), .customShort("t")],
         help: ArgumentHelp("Prints an ascii table of coverage numbers.")
     )
-    var printTable: Bool
+    var printTable: Bool = false
 
     @Flag(
         name: [.customLong("dependencies"), .customShort("d")],
         help: ArgumentHelp("Include dependencies in code coverage calculation.")
     )
-    var includeDependencies: Bool
+    var includeDependencies: Bool = false
 
     func validate() throws {
-        guard (0...100).contains(minimumCoverage) else {
+        guard (0 ... 100).contains(minimumCoverage) else {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
         }
     }
@@ -81,15 +82,15 @@ struct StatsCommand: ParsableCommand {
             .fileCoverages(for: aggProperty)
             .filter { filename, _ in
                 includeDependencies ? true : !isDependencyPath(filename)
+            }
+
+        let totalCountOfProperty = coveragePerFile.reduce(0) { tot, next in
+            tot + next.value.count
         }
 
-        let totalCountOfProperty = coveragePerFile.reduce(0, {tot, next in
-            tot + next.value.count
-        })
-
-        let overallCoverage = coveragePerFile.reduce(0.0, { avg, next in
+        let overallCoverage = coveragePerFile.reduce(0.0) { avg, next in
             avg + Double(next.value.covered) / Double(totalCountOfProperty)
-        })
+        }
 
         let overallCoveragePercent = overallCoverage * 100
 
@@ -135,8 +136,8 @@ struct StatsCommand: ParsableCommand {
                     ? Column(title: "Dependency?", value: $0.dependency ? "✓" : "", align: .center)
                     : nil,
                 Column(title: "File", value: $0.filename),
-                Column(title: "Coverage", value: $0.coverage >= 0 ? "\(String(format: "%.2f", $0.coverage))%" : "")
-                ].compactMap { $0 }
+                Column(title: "Coverage", value: $0.coverage >= 0 ? "\(String(format: "%.2f", $0.coverage))%" : ""),
+            ].compactMap { $0 }
         }
 
         table.print(sourceCoverages + [dividerTriple] + testCoverages, style: Simple.self)
