@@ -80,7 +80,7 @@ struct StatsCommand: ParsableCommand {
             .fileCoverages(for: aggProperty)
             .filter { filename, _ in
                 includeDependencies ? true : !isDependencyPath(filename)
-            }
+        }
 
         let totalCountOfProperty = coveragePerFile.reduce(0) { tot, next in
             tot + next.value.count
