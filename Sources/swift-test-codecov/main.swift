@@ -57,7 +57,7 @@ struct StatsCommand: ParsableCommand {
     var includeDependencies: Bool = false
 
     func validate() throws {
-        guard (0 ... 100).contains(minimumCoverage) else {
+        guard (0...100).contains(minimumCoverage) else {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
         }
     }
