@@ -30,7 +30,6 @@ struct StatsCommand: ParsableCommand {
 
     @Option(
         name: [.long, .short],
-        // default: .lines,
         help: ArgumentHelp("The metric over which to aggregate. One of "
             + CodeCov.AggregateProperty.allCases.map { $0.rawValue }.joined(separator: ", "))
     )
@@ -38,7 +37,6 @@ struct StatsCommand: ParsableCommand {
 
     @Option(
         name: [.customLong("minimum"), .customShort("v")],
-        // default: 0,
         help: ArgumentHelp(
             "The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
             valueName: "minimum-coverage"
