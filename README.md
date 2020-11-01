@@ -11,19 +11,22 @@ The library has a pretty small and straight forward interface. I have not had ti
 ### Tool
 
 ```
-swift-test-codecov <codecov-filepath> [--metric <metric>] [--minimum <minimum-coverage>] [--table] [--dependencies]
+swift-test-codecov <codecov-filepath> [--metric <metric>] [--minimum <minimum-coverage>] [--table] [--sort <sort>] [--dependencies]
 
 ARGUMENTS:
   <codecov-filepath>      the location of the JSON file output by `swift test --enable-code-coverage`. 
         You will find this in the build directory.
 
-        For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
+        For example, if you've just performed a debug build, the file will be located at
+        `./.build/debug/codecov/<package-name>.json`.
 
 OPTIONS:
-  -m, --metric <metric>   The metric over which to aggregate. One of ["lines", "functions", "instantiations"] (default: lines)
+  -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
-                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in
+                          exit code 1. (default: 0)
   -t, --table             Prints an ascii table of coverage numbers. 
+  -s, --sort <sort>       Set the sort order for the coverage table. One of filename, +cov, -cov (default: filename)
   -d, --dependencies      Include dependencies in code coverage calculation. 
   -h, --help              Show help information.
 ```
