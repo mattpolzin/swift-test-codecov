@@ -13,9 +13,10 @@ For example, if you've just performed a debug build, the file will be located at
 """
 
 /// How to sort the coverage table results.
-enum SortOrder: String, ExpressibleByArgument {
+enum SortOrder: String, CaseIterable, ExpressibleByArgument {
     case filename
-    case coverage
+    case coverageAsc = "+cov"
+    case coverageDesc = "-cov"
 }
 
 struct StatsCommand: ParsableCommand {
@@ -42,12 +43,6 @@ struct StatsCommand: ParsableCommand {
     var metric: CodeCov.AggregateProperty = .lines
 
     @Option(
-        name: [.long],
-        help: ArgumentHelp("Set the sort order for the coverage table.")
-    )
-    var sort: SortOrder = .filename
-
-    @Option(
         name: [.customLong("minimum"), .customShort("v")],
         help: ArgumentHelp(
             "The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
@@ -61,6 +56,14 @@ struct StatsCommand: ParsableCommand {
         help: ArgumentHelp("Prints an ascii table of coverage numbers.")
     )
     var printTable: Bool = false
+
+    @Option(
+        name: [.long, .short],
+        parsing: .unconditional,
+        help: ArgumentHelp("Set the sort order for the coverage table. One of "
+                            + SortOrder.allCases.map { $0.rawValue }.joined(separator: ", "))
+    )
+    var sort: SortOrder = .filename
 
     @Flag(
         name: [.customLong("dependencies"), .customShort("d")],
@@ -127,14 +130,17 @@ struct StatsCommand: ParsableCommand {
                 filename: URL(fileURLWithPath: $0.key).lastPathComponent,
                 coverage: $0.value.percent
             )
-        }
+        }.sorted { $0.filename < $1.filename }
 
         let sortedCoverage : [CoverageTriple]
         switch sort {
         case .filename:
-            sortedCoverage = fileCoverages.sorted { $0.filename < $1.filename }
-        case .coverage:
+            // we always sort by filename above, even if we subsequently sort by another field.
+            sortedCoverage = fileCoverages
+        case .coverageAsc:
             sortedCoverage = fileCoverages.sorted { $0.coverage < $1.coverage }
+        case .coverageDesc:
+            sortedCoverage = fileCoverages.sorted { $0.coverage > $1.coverage }
         }
 
         var sourceCoverages = [CoverageTriple]()
