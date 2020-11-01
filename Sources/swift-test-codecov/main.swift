@@ -12,6 +12,12 @@ You will find this in the build directory.
 For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
 """
 
+/// How to sort the coverage table results.
+enum SortOrder: String, ExpressibleByArgument {
+    case filename
+    case coverage
+}
+
 struct StatsCommand: ParsableCommand {
     static let configuration: CommandConfiguration = .init(
         commandName: "swift-test-codecov",
@@ -34,6 +40,12 @@ struct StatsCommand: ParsableCommand {
             + CodeCov.AggregateProperty.allCases.map { $0.rawValue }.joined(separator: ", "))
     )
     var metric: CodeCov.AggregateProperty = .lines
+
+    @Option(
+        name: [.long],
+        help: ArgumentHelp("Set the sort order for the coverage table.")
+    )
+    var sort: SortOrder = .filename
 
     @Option(
         name: [.customLong("minimum"), .customShort("v")],
@@ -115,11 +127,19 @@ struct StatsCommand: ParsableCommand {
                 filename: URL(fileURLWithPath: $0.key).lastPathComponent,
                 coverage: $0.value.percent
             )
-        }.sorted { $0.filename < $1.filename }
+        }
+
+        let sortedCoverage : [CoverageTriple]
+        switch sort {
+        case .filename:
+            sortedCoverage = fileCoverages.sorted { $0.filename < $1.filename }
+        case .coverage:
+            sortedCoverage = fileCoverages.sorted { $0.coverage < $1.coverage }
+        }
 
         var sourceCoverages = [CoverageTriple]()
         var testCoverages = [CoverageTriple]()
-        for fileCoverage in fileCoverages {
+        for fileCoverage in sortedCoverage {
             if fileCoverage.filename.contains("Tests") {
                 testCoverages.append(fileCoverage)
             } else {
