@@ -109,7 +109,7 @@ struct StatsCommand: ParsableCommand {
         if !passed && printFormat == .table {
             // we don't print the error message out for the minimal or JSON formats.
             print("")
-            print("!! The overall coverage did not meet the minimum threshold of \(minimumCov)%")
+            print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
         }
 
         printResults(aggregateCoverage)
