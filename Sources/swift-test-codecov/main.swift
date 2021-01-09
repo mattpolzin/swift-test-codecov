@@ -12,7 +12,14 @@ You will find this in the build directory.
 For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
 """
 
-/// How to sort the coverage table results.
+/// How to display the results.
+enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
+    case minimal
+    case table
+    case json
+}
+
+/// How to sort the coverage table results (if `PrintFormat` is `.table`).
 enum SortOrder: String, CaseIterable, ExpressibleByArgument {
     case filename
     case coverageAsc = "+cov"
@@ -25,6 +32,9 @@ struct StatsCommand: ParsableCommand {
         abstract: "Analyze Code Coverage Metrics",
         discussion: "Ingest Code Coverage Metrics provided by `swift test --enable-code-coverage` and provide some high level analysis."
     )
+
+    static let jsonDecoder = JSONDecoder()
+    static let jsonEncoder = JSONEncoder()
 
     @Argument(
         help: ArgumentHelp(
@@ -51,11 +61,13 @@ struct StatsCommand: ParsableCommand {
     )
     var minimumCoverage: Int = 0
 
-    @Flag(
-        name: [.customLong("table"), .customShort("t")],
-        help: ArgumentHelp("Prints an ascii table of coverage numbers.")
+    @Option(
+        name: [.long, .short],
+        parsing: .unconditional,
+        help: ArgumentHelp("Set the print format. One of "
+                            + PrintFormat.allCases.map { $0.rawValue }.joined(separator: ", "))
     )
-    var printTable: Bool = false
+    var printFormat: PrintFormat = .minimal
 
     @Option(
         name: [.long, .short],
@@ -78,53 +90,62 @@ struct StatsCommand: ParsableCommand {
     }
 
     func run() throws {
-        let jsonDecoder = JSONDecoder()
 
         let aggProperty: CodeCov.AggregateProperty = metric
         let minimumCov = minimumCoverage
 
         let data = try! Data(contentsOf: URL(fileURLWithPath: codecovFile))
 
-        let codeCoverage = try! jsonDecoder.decode(CodeCov.self, from: data)
+        let codeCoverage = try! Self.jsonDecoder.decode(CodeCov.self, from: data)
 
-        func isDependencyPath(_ path: String) -> Bool {
-            return path.contains(".build/")
+        let aggregateCoverage = Aggregate(
+            coverage: codeCoverage,
+            property: aggProperty,
+            includeDependencies: includeDependencies
+        )
+
+        let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
+
+        if !passed && printFormat == .table {
+            // we don't print the error message out for the minimal or JSON formats.
+            print("")
+            print("!! The overall coverage did not meet the minimum threshold of \(minimumCov)%")
         }
 
-        let coveragePerFile = codeCoverage
-            .fileCoverages(for: aggProperty)
-            .filter { filename, _ in
-                includeDependencies ? true : !isDependencyPath(filename)
-        }
+        printResults(aggregateCoverage)
 
-        let totalCountOfProperty = coveragePerFile.reduce(0) { tot, next in
-            tot + next.value.count
-        }
-
-        let overallCoverage = coveragePerFile.reduce(0.0) { avg, next in
-            avg + Double(next.value.covered) / Double(totalCountOfProperty)
-        }
-
-        let overallCoveragePercent = overallCoverage * 100
-
-        let formattedOverallPercent = "\(String(format: "%.2f", overallCoveragePercent))%"
-
-        guard overallCoveragePercent > Double(minimumCov) else {
-            print("The overall coverage (\(formattedOverallPercent)) did not meet the minimum threshold of \(minimumCov)%")
+        guard passed else {
             throw ExitCode.failure
         }
+    }
+}
 
-        guard printTable else {
-            print(formattedOverallPercent)
-            return
+extension StatsCommand {
+
+    func printResults(_ aggregateCoverage: Aggregate) {
+        switch printFormat {
+        case .minimal:
+            printMinimal(aggregateCoverage)
+        case .table:
+            printTable(aggregateCoverage)
+        case .json:
+            printJson(aggregateCoverage)
         }
+    }
 
-        print("Overall Coverage: \(formattedOverallPercent)")
+    func printMinimal(_ aggregateCoverage: Aggregate) {
+        print(aggregateCoverage.formattedOverallCoveragePercent)
+    }
+
+    func printTable(_ aggregateCoverage: Aggregate) {
+
+        print("")
+        print("Overall Coverage: \(aggregateCoverage.formattedOverallCoveragePercent)")
         print("")
 
         typealias CoverageTriple = (dependency: Bool, filename: String, coverage: Double)
 
-        let fileCoverages: [CoverageTriple] = coveragePerFile.map {
+        let fileCoverages: [CoverageTriple] = aggregateCoverage.coveragePerFile.map {
             (
                 dependency: isDependencyPath($0.key),
                 filename: URL(fileURLWithPath: $0.key).lastPathComponent,
@@ -152,6 +173,7 @@ struct StatsCommand: ParsableCommand {
                 sourceCoverages.append(fileCoverage)
             }
         }
+        let blankTriple: CoverageTriple = (false, "", -1)
         let dividerTriple: CoverageTriple = (false, "=-=-=-=-=-=-=-=-=", -1)
 
         let table = TextTable<CoverageTriple> {
@@ -164,7 +186,11 @@ struct StatsCommand: ParsableCommand {
             ].compactMap { $0 }
         }
 
-        table.print(sourceCoverages + [dividerTriple] + testCoverages, style: Simple.self)
+        table.print(sourceCoverages + [blankTriple, dividerTriple, blankTriple] + testCoverages, style: Simple.self)
+    }
+
+    func printJson(_ aggregateCoverage: Aggregate) {
+        print(String(data: try! Self.jsonEncoder.encode(aggregateCoverage), encoding: .utf8)!)
     }
 }
 
