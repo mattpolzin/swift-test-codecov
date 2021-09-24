@@ -2,7 +2,6 @@
 import ArgumentParser
 import Foundation
 import SwiftTestCodecovLib
-import TextTable
 
 extension CodeCov.AggregateProperty: ExpressibleByArgument {}
 
@@ -15,7 +14,6 @@ For example, if you've just performed a debug build, the file will be located at
 /// How to display the results.
 enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
     case minimal
-    case table
     case json
 }
 
@@ -132,7 +130,7 @@ struct StatsCommand: ParsableCommand {
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
-        if !passed && printFormat == .table {
+        if !passed{
             // we don't print the error message out for the minimal or JSON formats.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
@@ -152,8 +150,6 @@ extension StatsCommand {
         switch printFormat {
         case .minimal:
             printMinimal(aggregateCoverage)
-        case .table:
-            printTable(aggregateCoverage)
         case .json:
             printJson(aggregateCoverage)
         }
@@ -161,58 +157,6 @@ extension StatsCommand {
 
     func printMinimal(_ aggregateCoverage: Aggregate) {
         print(aggregateCoverage.formattedOverallCoveragePercent)
-    }
-
-    func printTable(_ aggregateCoverage: Aggregate) {
-
-        print("")
-        print("Overall Coverage: \(aggregateCoverage.formattedOverallCoveragePercent)")
-        print("")
-
-        typealias CoverageTriple = (dependency: Bool, filename: String, coverage: Double)
-
-        let fileCoverages: [CoverageTriple] = aggregateCoverage.coveragePerFile.map {
-            (
-                dependency: isDependencyPath($0.key, projectName: projectName),
-                filename: URL(fileURLWithPath: $0.key).lastPathComponent,
-                coverage: $0.value.percent
-            )
-        }.sorted { $0.filename < $1.filename }
-
-        let sortedCoverage : [CoverageTriple]
-        switch sort {
-        case .filename:
-            // we always sort by filename above, even if we subsequently sort by another field.
-            sortedCoverage = fileCoverages
-        case .coverageAsc:
-            sortedCoverage = fileCoverages.sorted { $0.coverage < $1.coverage }
-        case .coverageDesc:
-            sortedCoverage = fileCoverages.sorted { $0.coverage > $1.coverage }
-        }
-
-        var sourceCoverages = [CoverageTriple]()
-        var testCoverages = [CoverageTriple]()
-        for fileCoverage in sortedCoverage {
-            if fileCoverage.filename.contains("Tests") {
-                testCoverages.append(fileCoverage)
-            } else {
-                sourceCoverages.append(fileCoverage)
-            }
-        }
-        let blankTriple: CoverageTriple = (false, "", -1)
-        let dividerTriple: CoverageTriple = (false, "=-=-=-=-=-=-=-=-=", -1)
-
-        let table = TextTable<CoverageTriple> {
-            return [
-                self.includeDependencies
-                    ? Column(title: "Dependency?", value: $0.dependency ? "✓" : "", align: .center)
-                    : nil,
-                Column(title: "File", value: $0.filename),
-                Column(title: "Coverage", value: $0.coverage >= 0 ? "\(String(format: "%.2f", $0.coverage))%" : ""),
-            ].compactMap { $0 }
-        }
-
-        table.print(sourceCoverages + [blankTriple, dividerTriple, blankTriple] + testCoverages, style: Simple.self)
     }
 
     func printJson(_ aggregateCoverage: Aggregate) {
