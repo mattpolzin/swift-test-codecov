@@ -33,8 +33,13 @@ public struct Aggregate: Encodable {
     public init(
         coverage: CodeCov,
         property: CodeCov.AggregateProperty,
-        includeDependencies: Bool
+        includeDependencies: Bool,
+        stripTestFiles: Bool
     ) {
+        var coverage = coverage
+        if stripTestFiles {
+            coverage.stripAllTestFiles()
+        }
         coveragePerFile = coverage
             .fileCoverages(for: property)
             .filter { filename, _ in
