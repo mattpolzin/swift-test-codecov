@@ -42,7 +42,7 @@ public struct Aggregate: Encodable {
             var nonTestDataSet = [CodeCov.Data]()
             for datum in coverage.data {
                 let nonTestFiles = datum.files.filter({ file in
-                    !(file.filename.lowercased().contains("tests") || file.filename.lowercased().contains("test"))
+                    !(file.filename.lowercased().contains("test"))
                 })
                 // If all files in this data instance were tests, ignore it altogether. Else add it to the array.
                 if !nonTestFiles.isEmpty {

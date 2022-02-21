@@ -27,6 +27,7 @@ OPTIONS:
                           Set the print format. One of minimal, table, json (default: minimal)
   -s, --sort <sort>       Set the sort order for the coverage table. One of filename, +cov, -cov (default: filename)
   -d, --dependencies      Include dependencies in code coverage calculation. 
+  -r, --removetestfiles   Removes coverage details for all files containing "Tests" or "test" in their name
   -h, --help              Show help information.
 ```
 
