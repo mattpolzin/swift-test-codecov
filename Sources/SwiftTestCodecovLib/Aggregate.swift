@@ -33,8 +33,26 @@ public struct Aggregate: Encodable {
     public init(
         coverage: CodeCov,
         property: CodeCov.AggregateProperty,
-        includeDependencies: Bool
+        includeDependencies: Bool,
+        includeTests: Bool
     ) {
+        var coverage = coverage
+
+        if !includeTests {
+            var nonTestDataSet = [CodeCov.Data]()
+            for datum in coverage.data {
+                let nonTestFiles = datum.files.filter({ file in
+                    !(file.filename.lowercased().contains("test"))
+                })
+                // If all files in this data instance were tests, ignore it altogether. Else add it to the array.
+                if !nonTestFiles.isEmpty {
+                    nonTestDataSet.append(CodeCov.Data(files: nonTestFiles))
+                }
+            }
+            // Create a new CodeCov instance from the earlier one, minus the test files
+            coverage = CodeCov(version: coverage.version, type: coverage.type, data: nonTestDataSet)
+        }
+
         coveragePerFile = coverage
             .fileCoverages(for: property)
             .filter { filename, _ in

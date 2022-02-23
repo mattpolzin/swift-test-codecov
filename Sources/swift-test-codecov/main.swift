@@ -83,6 +83,13 @@ struct StatsCommand: ParsableCommand {
     )
     var includeDependencies: Bool = false
 
+    @Flag(
+        name: [.customLong("tests")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether test files are included in coverage calculation.")
+    )
+    var includeTests: Bool = false
+    
     func validate() throws {
         guard (0...100).contains(minimumCoverage) else {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
@@ -101,7 +108,8 @@ struct StatsCommand: ParsableCommand {
         let aggregateCoverage = Aggregate(
             coverage: codeCoverage,
             property: aggProperty,
-            includeDependencies: includeDependencies
+            includeDependencies: includeDependencies,
+            includeTests: includeTests
         )
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
