@@ -7,6 +7,8 @@
 
 import Foundation
 
+/// A Decodable representation of the JSON that
+/// `swift test --enable-code-coverage` outputs.
 public struct CodeCov: Decodable {
     public let version: String
     public let type: String

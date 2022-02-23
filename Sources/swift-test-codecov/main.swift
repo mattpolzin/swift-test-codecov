@@ -78,8 +78,9 @@ struct StatsCommand: ParsableCommand {
     var sort: SortOrder = .filename
 
     @Flag(
-        name: [.customLong("dependencies"), .customShort("d")],
-        help: ArgumentHelp("Include dependencies in code coverage calculation.")
+        name: [.customLong("dependencies")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether dependencies are included in code coverage calculation.")
     )
     var includeDependencies: Bool = false
 
