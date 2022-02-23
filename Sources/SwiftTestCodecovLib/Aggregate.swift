@@ -26,6 +26,7 @@ public struct Aggregate: Encodable {
         overallCoverage * 100
     }
 
+    /// A String-formatted coverage percentage, out to two decimal places.
     public var formattedOverallCoveragePercent: String {
         "\(String(format: "%.2f", overallCoveragePercent))%"
     }
