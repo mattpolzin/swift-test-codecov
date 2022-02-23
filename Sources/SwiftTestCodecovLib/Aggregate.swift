@@ -34,11 +34,11 @@ public struct Aggregate: Encodable {
         coverage: CodeCov,
         property: CodeCov.AggregateProperty,
         includeDependencies: Bool,
-        stripTestFiles: Bool
+        includeTests: Bool
     ) {
         var coverage = coverage
 
-        if stripTestFiles {
+        if !includeTests {
             var nonTestDataSet = [CodeCov.Data]()
             for datum in coverage.data {
                 let nonTestFiles = datum.files.filter({ file in
