@@ -7,8 +7,8 @@ WORKDIR swift-test-codecov
 RUN git checkout master \
  && swift build
 
-FROM swift:slim
+FROM swift:latest
 
-COPY --from=builder /build/swift-test-codecov/.build/debug/swift-test-codecov /usr/bin/swift-test-codecov
+COPY --from=builder /build/swift-test-codecov/.build/debug/swift-test-codecov /swift-test-codecov
 
-ENTRYPOINT ['swift-test-codecov']
+ENTRYPOINT ["/swift-test-codecov"]
