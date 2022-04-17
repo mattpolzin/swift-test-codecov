@@ -1,6 +1,5 @@
 //
 //  Aggregate.swift
-//  
 //
 //  Created by Mathew Polzin on 1/8/21.
 //
@@ -8,7 +7,11 @@
 import Foundation
 
 public func isDependencyPath(_ path: String) -> Bool {
-    return path.contains(".build/")
+    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+    let projectDir = cwd.lastPathComponent
+    print(projectDir)
+    let isLocalDependency = projectDir != "" && !path.contains(projectDir)
+    return isLocalDependency || path.contains(".build/")
 }
 
 public struct Aggregate: Encodable {

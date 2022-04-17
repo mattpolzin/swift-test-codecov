@@ -4,7 +4,7 @@ WORKDIR /build
 RUN git clone https://github.com/mattpolzin/swift-test-codecov.git
 
 WORKDIR swift-test-codecov
-RUN git checkout master \
+RUN git checkout main \
  && swift build
 
 FROM swift:5.4.3-slim
