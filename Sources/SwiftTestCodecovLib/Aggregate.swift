@@ -9,7 +9,6 @@ import Foundation
 public func isDependencyPath(_ path: String) -> Bool {
     let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     let projectDir = cwd.lastPathComponent
-    print(projectDir)
     let isLocalDependency = projectDir != "" && !path.contains(projectDir)
     return isLocalDependency || path.contains(".build/")
 }
