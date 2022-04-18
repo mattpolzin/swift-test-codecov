@@ -38,12 +38,21 @@ struct StatsCommand: ParsableCommand {
 
     @Argument(
         help: ArgumentHelp(
-            "the location of the JSON file output by `swift test --enable-code-coverage`.",
+            "The location of the JSON file output by `swift test --enable-code-coverage`.",
             discussion: codecovFileDiscussion,
             valueName: "codecov-filepath"
         )
     )
     var codecovFile: String
+
+    @Option(
+        help: ArgumentHelp(
+            "The name of the target project.",
+            discussion: "If specified, used to determine which source files being tested are outside of this project (local dependencies).",
+            valueName: "project-name"
+        )
+    )
+    var projectName: String?
 
     @Option(
         name: [.long, .short],
@@ -110,8 +119,16 @@ struct StatsCommand: ParsableCommand {
             coverage: codeCoverage,
             property: aggProperty,
             includeDependencies: includeDependencies,
-            includeTests: includeTests
+            includeTests: includeTests,
+            projectName: projectName
         )
+
+        if aggregateCoverage.totalCount == 0 {
+            print("")
+            print("No coverage was analyzed.")
+            print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
+            return
+        }
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
@@ -156,7 +173,7 @@ extension StatsCommand {
 
         let fileCoverages: [CoverageTriple] = aggregateCoverage.coveragePerFile.map {
             (
-                dependency: isDependencyPath($0.key),
+                dependency: isDependencyPath($0.key, projectName: projectName),
                 filename: URL(fileURLWithPath: $0.key).lastPathComponent,
                 coverage: $0.value.percent
             )

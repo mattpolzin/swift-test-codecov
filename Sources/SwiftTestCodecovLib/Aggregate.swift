@@ -6,9 +6,14 @@
 
 import Foundation
 
-public func isDependencyPath(_ path: String) -> Bool {
-    let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-    let projectDir = cwd.lastPathComponent
+public func isDependencyPath(_ path: String, projectName: String? = nil) -> Bool {
+    let projectDir: String
+    if let projectName = projectName {
+        projectDir = projectName
+    } else {
+        let cwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        projectDir = cwd.lastPathComponent
+    }
     let isLocalDependency = projectDir != "" && !path.contains(projectDir)
     return isLocalDependency || path.contains(".build/")
 }
@@ -37,7 +42,8 @@ public struct Aggregate: Encodable {
         coverage: CodeCov,
         property: CodeCov.AggregateProperty,
         includeDependencies: Bool,
-        includeTests: Bool
+        includeTests: Bool,
+        projectName: String? = nil
     ) {
         var coverage = coverage
 
@@ -59,7 +65,7 @@ public struct Aggregate: Encodable {
         coveragePerFile = coverage
             .fileCoverages(for: property)
             .filter { filename, _ in
-                includeDependencies ? true : !isDependencyPath(filename)
+                includeDependencies ? true : !isDependencyPath(filename, projectName: projectName)
             }
 
         let total = coveragePerFile.reduce(0) { tot, next in
