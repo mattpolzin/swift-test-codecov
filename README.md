@@ -10,6 +10,8 @@ The library has a pretty small and straight forward interface. I have not had ti
 
 ### Tool
 
+The tool is meant to be run from the root folder of your project. The executable can be anywhere but the current working directory is important for the tool to accurately identify which files are part of your project and which files are part of a dependency's project.
+
 ```
 USAGE: swift-test-codecov <codecov-filepath> [--metric <metric>] [--minimum <minimum-coverage>] [--print-format <print-format>] [--sort <sort>] [--dependencies] [--no-dependencies] [--tests] [--no-tests]
 
