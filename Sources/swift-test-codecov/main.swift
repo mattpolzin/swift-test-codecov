@@ -123,6 +123,13 @@ struct StatsCommand: ParsableCommand {
             projectName: projectName
         )
 
+        if aggregateCoverage.totalCount == 0 {
+            print("")
+            print("No coverage was analyzed.")
+            print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
+            return
+        }
+
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
         if !passed && printFormat == .table {
