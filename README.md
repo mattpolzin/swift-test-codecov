@@ -37,3 +37,9 @@ OPTIONS:
 
 ## Building Docker Image
 Run `docker build -t swift-test-codecov .` to build the docker image.
+
+## Installing with Make
+
+Run `sudo make install` to install on MacOS.
+
+Run `sudo make uninstall` to uninstall.
