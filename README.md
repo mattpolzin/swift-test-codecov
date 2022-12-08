@@ -17,7 +17,7 @@ OVERVIEW: Analyze Code Coverage Metrics
 
 Ingest Code Coverage Metrics provided by `swift test --enable-code-coverage` and provide some high level analysis.
 
-USAGE: swift-test-codecov <codecov-filepath> [--project-name <project-name>] [--metric <metric>] [--minimum <minimum-coverage>] [--print-format <print-format>] [--sort <sort>] [--dependencies] [--no-dependencies] [--tests] [--no-tests]
+USAGE: swift-test-codecov <options>
 
 ARGUMENTS:
   <codecov-filepath>      The location of the JSON file output by `swift test --enable-code-coverage`. 
@@ -32,12 +32,16 @@ OPTIONS:
   -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
                           The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+  --explain-failure/--no-explain-failure
+                          Determines whether a message will be displayed if the minimum coverage threshold was not met. (Does not apply to print-formats `numeric` and `json`.) (default: true)
   -p, --print-format <print-format>
                           Set the print format. One of minimal, numeric, table, json (default: minimal)
   -s, --sort <sort>       Set the sort order for the coverage table. One of filename, +cov, -cov (default: filename)
   --dependencies/--no-dependencies
                           Determines whether dependencies are included in code coverage calculation. (default: false)
   --tests/--no-tests      Determines whether test files are included in coverage calculation. (default: false)
+  --warn-missing-tests/--no-warn-missing-tests
+                          Determines whether a warning will be displayed for 0% coverage. (Does not apply to print-formats `numeric` and `json`.) (default: true)
   -h, --help              Show help information.
 ```
 

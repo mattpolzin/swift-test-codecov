@@ -70,6 +70,13 @@ struct StatsCommand: ParsableCommand {
         )
     )
     var minimumCoverage: Int = 0
+    
+    @Flag(
+        name: [.customLong("explain-failure")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met. (Does not apply to print-formats `numeric` and `json`.)")
+    )
+    var explainFailure: Bool = true
 
     @Option(
         name: [.long, .short],
@@ -101,6 +108,13 @@ struct StatsCommand: ParsableCommand {
     )
     var includeTests: Bool = false
     
+    @Flag(
+        name: [.customLong("warn-missing-tests")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether a warning will be displayed for 0% coverage. (Does not apply to print-formats `numeric` and `json`.)")
+    )
+    var warnMissingTests: Bool = true
+    
     func validate() throws {
         guard (0...100).contains(minimumCoverage) else {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
@@ -124,15 +138,16 @@ struct StatsCommand: ParsableCommand {
             projectName: projectName
         )
 
-        if aggregateCoverage.totalCount == 0 && printFormat != .numeric {
+        if aggregateCoverage.totalCount == 0 && warnMissingTests {
             print("")
             print("No coverage was analyzed.")
+            print("")
             print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
         }
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
-        if !passed && printFormat == .table {
+        if !passed && explainFailure {
             // we don't print the error message out for the minimal or JSON formats.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
@@ -162,7 +177,9 @@ extension StatsCommand {
     }
 
     func printMinimal(_ aggregateCoverage: Aggregate) {
+        print("")
         print(aggregateCoverage.formattedOverallCoveragePercent)
+        print("")
     }
     
     func printNumeric(_ aggregateCoverage: Aggregate) {
@@ -170,7 +187,7 @@ extension StatsCommand {
     }
 
     func printTable(_ aggregateCoverage: Aggregate) {
-
+        
         print("")
         print("Overall Coverage: \(aggregateCoverage.formattedOverallCoveragePercent)")
         print("")
