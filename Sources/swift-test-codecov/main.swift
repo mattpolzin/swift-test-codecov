@@ -15,6 +15,7 @@ For example, if you've just performed a debug build, the file will be located at
 /// How to display the results.
 enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
     case minimal
+    case numeric
     case table
     case json
 }
@@ -123,11 +124,10 @@ struct StatsCommand: ParsableCommand {
             projectName: projectName
         )
 
-        if aggregateCoverage.totalCount == 0 {
+        if aggregateCoverage.totalCount == 0 && printFormat != .numeric {
             print("")
             print("No coverage was analyzed.")
             print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
-            return
         }
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
@@ -152,6 +152,8 @@ extension StatsCommand {
         switch printFormat {
         case .minimal:
             printMinimal(aggregateCoverage)
+        case .numeric:
+            printNumeric(aggregateCoverage)
         case .table:
             printTable(aggregateCoverage)
         case .json:
@@ -161,6 +163,10 @@ extension StatsCommand {
 
     func printMinimal(_ aggregateCoverage: Aggregate) {
         print(aggregateCoverage.formattedOverallCoveragePercent)
+    }
+    
+    func printNumeric(_ aggregateCoverage: Aggregate) {
+        print(aggregateCoverage.overallCoveragePercent)
     }
 
     func printTable(_ aggregateCoverage: Aggregate) {

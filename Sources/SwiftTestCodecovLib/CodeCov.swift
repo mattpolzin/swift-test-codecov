@@ -15,8 +15,10 @@ public struct CodeCov: Decodable {
     public let data: [Data]
 
     public func fileCoverages(for property: AggregateProperty) -> [String: File.Coverage] {
-        return Dictionary(uniqueKeysWithValues: data
-            .first!
+        guard let first = data.first else {
+            return [:]
+        }
+        return Dictionary(uniqueKeysWithValues: first
             .files
             .map { ($0.filename, $0.summary.coverage(for: property)) }
         )
