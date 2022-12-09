@@ -33,7 +33,8 @@ OPTIONS:
   -v, --minimum <minimum-coverage>
                           The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
   --explain-failure/--no-explain-failure
-                          Determines whether a message will be displayed if the minimum coverage threshold was not met. (default: true)
+                          Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable
+                          JSON.) (default: true)
   -p, --print-format <print-format>
                           Set the print format. One of minimal, numeric, table, json (default: minimal)
   -s, --sort <sort>       Set the sort order for the coverage table. One of filename, +cov, -cov (default: filename)
@@ -41,7 +42,8 @@ OPTIONS:
                           Determines whether dependencies are included in code coverage calculation. (default: false)
   --tests/--no-tests      Determines whether test files are included in coverage calculation. (default: false)
   --warn-missing-tests/--no-warn-missing-tests
-                          Determines whether a warning will be displayed if no coverage data is available. (default: true)
+                          Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)
+                          (default: true)
   -h, --help              Show help information.
 ```
 

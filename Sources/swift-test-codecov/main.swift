@@ -74,7 +74,7 @@ struct StatsCommand: ParsableCommand {
     @Flag(
         name: [.customLong("explain-failure")],
         inversion: .prefixedNo,
-        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met.")
+        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable JSON.)")
     )
     var explainFailure: Bool = true
 
@@ -111,7 +111,7 @@ struct StatsCommand: ParsableCommand {
     @Flag(
         name: [.customLong("warn-missing-tests")],
         inversion: .prefixedNo,
-        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available.")
+        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)")
     )
     var warnMissingTests: Bool = true
     
@@ -138,7 +138,7 @@ struct StatsCommand: ParsableCommand {
             projectName: projectName
         )
 
-        if aggregateCoverage.totalCount == 0 && warnMissingTests {
+        if aggregateCoverage.totalCount == 0 && printFormat != .json && warnMissingTests {
             print("")
             print("No coverage was analyzed.")
             print("")
@@ -147,7 +147,7 @@ struct StatsCommand: ParsableCommand {
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
-        if !passed && explainFailure {
+        if !passed && printFormat != .json && explainFailure {
             // we don't print the error message out for the minimal or JSON formats.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
