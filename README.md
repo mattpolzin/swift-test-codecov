@@ -41,7 +41,7 @@ OPTIONS:
                           Determines whether dependencies are included in code coverage calculation. (default: false)
   --tests/--no-tests      Determines whether test files are included in coverage calculation. (default: false)
   --warn-missing-tests/--no-warn-missing-tests
-                          Determines whether a warning will be displayed for 0% coverage. (Does not apply to print-formats `numeric` and `json`.) (default: true)
+                          Determines whether a warning will be displayed if no coverage data is available. (Does not apply to print-formats `numeric` and `json`.) (default: true)
   -h, --help              Show help information.
 ```
 
