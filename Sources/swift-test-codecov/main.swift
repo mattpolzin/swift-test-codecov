@@ -111,7 +111,7 @@ struct StatsCommand: ParsableCommand {
     @Flag(
         name: [.customLong("warn-missing-tests")],
         inversion: .prefixedNo,
-        help: ArgumentHelp("Determines whether a warning will be displayed for 0% coverage. (Does not apply to print-formats `numeric` and `json`.)")
+        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available. (Does not apply to print-formats `numeric` and `json`.)")
     )
     var warnMissingTests: Bool = true
     
