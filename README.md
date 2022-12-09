@@ -44,6 +44,9 @@ OPTIONS:
   -x, --exclude-path <regex>
                           Regex pattern of full file paths to exclude in coverage calculation. 
         If specified, used to determine which source files being tested should be excluded. (Example value "View\.swift|Mock\.swift" excludes all files with names ending with `View` or `Mock`.)
+
+        If the regular expression cannot be parsed by the system, the application will exit with code 1. An error message will be printed unless the `print-format` is set to `json`, in which case an
+        empty object (`{}`) will be printed.
   --warn-missing-tests/--no-warn-missing-tests
                           Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)
                           (default: true)

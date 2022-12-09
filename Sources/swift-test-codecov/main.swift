@@ -112,7 +112,7 @@ struct StatsCommand: ParsableCommand {
         name: [.customLong("exclude-path"), .customShort("x")],
         help: ArgumentHelp(
             "Regex pattern of full file paths to exclude in coverage calculation.",
-            discussion: "If specified, used to determine which source files being tested should be excluded. (Example value \"View\\.swift|Mock\\.swift\" excludes all files with names ending with `View` or `Mock`.)",
+            discussion: "If specified, used to determine which source files being tested should be excluded. (Example value \"View\\.swift|Mock\\.swift\" excludes all files with names ending with `View` or `Mock`.)\n\nIf the regular expression cannot be parsed by the system, the application will exit with code 1. An error message will be printed unless the `print-format` is set to `json`, in which case an empty object (`{}`) will be printed.",
             valueName: "regex"
         )
     )
@@ -151,7 +151,11 @@ struct StatsCommand: ParsableCommand {
                 projectName: projectName
             )
         } catch {
-            print("Invalid `excludeRegexString` unable to parse '\(String(describing: excludeRegexString))' as regular expression.")
+            if printFormat == .json {
+                print("{}")
+            } else {
+                print("Invalid `excludeRegexString` unable to parse '\(String(describing: excludeRegexString))' as regular expression.")
+            }
             throw ExitCode.failure
         }
 
