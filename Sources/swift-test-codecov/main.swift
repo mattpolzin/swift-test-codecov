@@ -74,7 +74,7 @@ struct StatsCommand: ParsableCommand {
     @Flag(
         name: [.customLong("explain-failure")],
         inversion: .prefixedNo,
-        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met. (Does not apply to print-formats `numeric` and `json`.)")
+        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met.")
     )
     var explainFailure: Bool = true
 
@@ -111,7 +111,7 @@ struct StatsCommand: ParsableCommand {
     @Flag(
         name: [.customLong("warn-missing-tests")],
         inversion: .prefixedNo,
-        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available. (Does not apply to print-formats `numeric` and `json`.)")
+        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available.")
     )
     var warnMissingTests: Bool = true
     
