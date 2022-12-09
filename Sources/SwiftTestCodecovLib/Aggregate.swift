@@ -16,18 +16,14 @@ public func isDependencyPath(_ path: String, projectName: String? = nil) -> Bool
         projectDir = cwd.lastPathComponent
     }
     let isLocalDependency = projectDir != "" && !path.contains(projectDir)
-    let excludedDependency = isLocalDependency || path.contains(".build/")
-    print("excludedDependency: \(excludedDependency) [\(path)]")
-    return excludedDependency
+    return isLocalDependency || path.contains(".build/")
 }
 
 public func isExcludedPath(_ path: String, regex: Regex?) -> Bool {
     guard let regex else {
         return false
     }
-    let excludedMatch = regex.matches(path)
-    print("excludedMatch: \(excludedMatch) [\(path)]")
-    return excludedMatch
+    return regex.matches(path)
 }
 
 public struct Aggregate: Encodable {
