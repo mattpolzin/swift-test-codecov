@@ -177,9 +177,7 @@ extension StatsCommand {
     }
 
     func printMinimal(_ aggregateCoverage: Aggregate) {
-        print("")
         print(aggregateCoverage.formattedOverallCoveragePercent)
-        print("")
     }
     
     func printNumeric(_ aggregateCoverage: Aggregate) {
