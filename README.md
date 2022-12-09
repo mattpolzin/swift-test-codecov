@@ -41,6 +41,9 @@ OPTIONS:
   --dependencies/--no-dependencies
                           Determines whether dependencies are included in code coverage calculation. (default: false)
   --tests/--no-tests      Determines whether test files are included in coverage calculation. (default: false)
+  -x, --exclude-path <regex>
+                          Regex pattern of full file paths to exclude in coverage calculation. 
+        If specified, used to determine which source files being tested should be excluded. (Example value "View\.swift|Mock\.swift" excludes all files with names ending with `View` or `Mock`.)
   --warn-missing-tests/--no-warn-missing-tests
                           Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)
                           (default: true)
