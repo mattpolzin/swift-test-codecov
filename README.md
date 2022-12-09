@@ -13,25 +13,37 @@ The library has a pretty small and straight forward interface. I have not had ti
 The tool is meant to be run from the root folder of your project. The executable can be anywhere but the current working directory is important for the tool to accurately identify which files are part of your project and which files are part of a dependency's project.
 
 ```
-USAGE: swift-test-codecov <codecov-filepath> [--metric <metric>] [--minimum <minimum-coverage>] [--print-format <print-format>] [--sort <sort>] [--dependencies] [--no-dependencies] [--tests] [--no-tests]
+OVERVIEW: Analyze Code Coverage Metrics
+
+Ingest Code Coverage Metrics provided by `swift test --enable-code-coverage` and provide some high level analysis.
+
+USAGE: swift-test-codecov <options>
 
 ARGUMENTS:
-  <codecov-filepath>      the location of the JSON file output by `swift test --enable-code-coverage`. 
+  <codecov-filepath>      The location of the JSON file output by `swift test --enable-code-coverage`. 
         You will find this in the build directory.
 
         For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
 
 OPTIONS:
+  --project-name <project-name>
+                          The name of the target project. 
+        If specified, used to determine which source files being tested are outside of this project (local dependencies).
   -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
-                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in
-                          exit code 1. (default: 0)
+                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+  --explain-failure/--no-explain-failure
+                          Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable
+                          JSON.) (default: true)
   -p, --print-format <print-format>
-                          Set the print format. One of minimal, table, json (default: minimal)
+                          Set the print format. One of minimal, numeric, table, json (default: minimal)
   -s, --sort <sort>       Set the sort order for the coverage table. One of filename, +cov, -cov (default: filename)
   --dependencies/--no-dependencies
                           Determines whether dependencies are included in code coverage calculation. (default: false)
   --tests/--no-tests      Determines whether test files are included in coverage calculation. (default: false)
+  --warn-missing-tests/--no-warn-missing-tests
+                          Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)
+                          (default: true)
   -h, --help              Show help information.
 ```
 
@@ -40,6 +52,6 @@ Run `docker build -t swift-test-codecov .` to build the docker image.
 
 ## Installing with Make
 
-Run `sudo make install` to install on MacOS.
+Run `sudo make install` to install.
 
 Run `sudo make uninstall` to uninstall.

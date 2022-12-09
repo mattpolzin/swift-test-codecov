@@ -15,6 +15,7 @@ For example, if you've just performed a debug build, the file will be located at
 /// How to display the results.
 enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
     case minimal
+    case numeric
     case table
     case json
 }
@@ -69,6 +70,13 @@ struct StatsCommand: ParsableCommand {
         )
     )
     var minimumCoverage: Int = 0
+    
+    @Flag(
+        name: [.customLong("explain-failure")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable JSON.)")
+    )
+    var explainFailure: Bool = true
 
     @Option(
         name: [.long, .short],
@@ -100,6 +108,13 @@ struct StatsCommand: ParsableCommand {
     )
     var includeTests: Bool = false
     
+    @Flag(
+        name: [.customLong("warn-missing-tests")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp("Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)")
+    )
+    var warnMissingTests: Bool = true
+    
     func validate() throws {
         guard (0...100).contains(minimumCoverage) else {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
@@ -123,16 +138,16 @@ struct StatsCommand: ParsableCommand {
             projectName: projectName
         )
 
-        if aggregateCoverage.totalCount == 0 {
+        if aggregateCoverage.totalCount == 0 && printFormat != .json && warnMissingTests {
             print("")
             print("No coverage was analyzed.")
+            print("")
             print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
-            return
         }
 
         let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
-        if !passed && printFormat == .table {
+        if !passed && printFormat != .json && explainFailure {
             // we don't print the error message out for the minimal or JSON formats.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
@@ -152,6 +167,8 @@ extension StatsCommand {
         switch printFormat {
         case .minimal:
             printMinimal(aggregateCoverage)
+        case .numeric:
+            printNumeric(aggregateCoverage)
         case .table:
             printTable(aggregateCoverage)
         case .json:
@@ -162,9 +179,13 @@ extension StatsCommand {
     func printMinimal(_ aggregateCoverage: Aggregate) {
         print(aggregateCoverage.formattedOverallCoveragePercent)
     }
+    
+    func printNumeric(_ aggregateCoverage: Aggregate) {
+        print(aggregateCoverage.overallCoveragePercent)
+    }
 
     func printTable(_ aggregateCoverage: Aggregate) {
-
+        
         print("")
         print("Overall Coverage: \(aggregateCoverage.formattedOverallCoveragePercent)")
         print("")
