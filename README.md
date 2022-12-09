@@ -32,6 +32,9 @@ OPTIONS:
   -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
                           The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+  --fail-on-negative-delta/--no-fail-on-negative-delta
+                          When enabled a coverage amount lower than the base will result in exit code 1. (default: false)
+        Requires a previous run's JSON file is passed with option `--base-json-file` or will be treated as `false`.
   --explain-failure/--no-explain-failure
                           Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable
                           JSON.) (default: true)
@@ -47,6 +50,10 @@ OPTIONS:
 
         If the regular expression cannot be parsed by the system, the application will exit with code 1. An error message will be printed unless the `print-format` is set to `json`, in which case an
         empty object (`{}`) will be printed.
+  -b, --base-json-file <previous-filepath>
+                          The location of the JSON file output by a previous run of `swift-test-codecov` with the `-p json` print format. 
+        If specified, the `minimal`, `table`, and `json` print formats will include total coverage, and if applicable, file-by-file differences. The `numeric` format will return the difference between
+        the base file and the current run.
   --warn-missing-tests/--no-warn-missing-tests
                           Determines whether a warning will be displayed if no coverage data is available. (The `json` print-format will never display messages and will always be parsable JSON.)
                           (default: true)

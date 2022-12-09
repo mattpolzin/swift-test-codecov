@@ -10,6 +10,7 @@ import Foundation
 /// A Decodable representation of the JSON that
 /// `swift test --enable-code-coverage` outputs.
 public struct CodeCov: Decodable {
+    
     public let version: String
     public let type: String
     public let data: [Data]
@@ -49,17 +50,29 @@ public struct CodeCov: Decodable {
             }
         }
 
-        public struct Coverage: Codable {
+        public struct Coverage: Codable, Equatable {
             public let count: Int
             public let covered: Int
             public let percent: Double
         }
     }
 
-    public enum AggregateProperty: String, RawRepresentable, CaseIterable {
+    public enum AggregateProperty: String, RawRepresentable, CaseIterable, Codable {
         case lines
         case functions
         case instantiations
+    }
+}
+
+extension CodeCov.File.Coverage {
+    /// Internal constructor for use in Unit Tests
+    internal init(
+        count: Int = 0,
+        covered: Int = 0
+    ) {
+        self.count = count
+        self.covered = covered
+        self.percent = Double(covered) / Double(count) * 100.0
     }
 }
 

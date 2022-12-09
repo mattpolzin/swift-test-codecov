@@ -1,6 +1,7 @@
 
 import ArgumentParser
 import Foundation
+import SwiftTestCodecovLogic
 import SwiftTestCodecovLib
 import TextTable
 
@@ -12,6 +13,10 @@ You will find this in the build directory.
 For example, if you've just performed a debug build, the file will be located at `./.build/debug/codecov/<package-name>.json`.
 """
 
+enum StatsCommandError: Error {
+    case fileError(String)
+}
+
 /// How to display the results.
 enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
     case minimal
@@ -20,12 +25,8 @@ enum PrintFormat: String, CaseIterable, ExpressibleByArgument {
     case json
 }
 
-/// How to sort the coverage table results (if `PrintFormat` is `.table`).
-enum SortOrder: String, CaseIterable, ExpressibleByArgument {
-    case filename
-    case coverageAsc = "+cov"
-    case coverageDesc = "-cov"
-}
+extension SwiftTestCodecovLogic.SortOrder: ExpressibleByArgument {}
+typealias TableSortOrder = SwiftTestCodecovLogic.SortOrder
 
 struct StatsCommand: ParsableCommand {
     static let configuration: CommandConfiguration = .init(
@@ -72,6 +73,16 @@ struct StatsCommand: ParsableCommand {
     var minimumCoverage: Int = 0
     
     @Flag(
+        name: [.customLong("fail-on-negative-delta")],
+        inversion: .prefixedNo,
+        help: ArgumentHelp(
+            "When enabled a coverage amount lower than the base will result in exit code 1.",
+            discussion: "Requires a previous run's JSON file is passed with option `--base-json-file` or will be treated as `false`."
+        )
+    )
+    var failOnNegativeDelta: Bool = false
+    
+    @Flag(
         name: [.customLong("explain-failure")],
         inversion: .prefixedNo,
         help: ArgumentHelp("Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable JSON.)")
@@ -92,7 +103,7 @@ struct StatsCommand: ParsableCommand {
         help: ArgumentHelp("Set the sort order for the coverage table. One of "
                             + SortOrder.allCases.map { $0.rawValue }.joined(separator: ", "))
     )
-    var sort: SortOrder = .filename
+    var sort: TableSortOrder = .filename
 
     @Flag(
         name: [.customLong("dependencies")],
@@ -118,6 +129,16 @@ struct StatsCommand: ParsableCommand {
     )
     var excludeRegexString: String?
     
+    @Option(
+        name: [.customLong("base-json-file"), .customShort("b")],
+        help: ArgumentHelp(
+            "The location of the JSON file output by a previous run of `swift-test-codecov` with the `-p json` print format.",
+            discussion: "If specified, the `minimal`, `table`, and `json` print formats will include total coverage, and if applicable, file-by-file differences. The `numeric` format will return the difference between the base file and the current run.",
+            valueName: "previous-filepath"
+        )
+    )
+    var baseJSONFile: String?
+    
     @Flag(
         name: [.customLong("warn-missing-tests")],
         inversion: .prefixedNo,
@@ -136,9 +157,20 @@ struct StatsCommand: ParsableCommand {
         let aggProperty: CodeCov.AggregateProperty = metric
         let minimumCov = minimumCoverage
 
-        let data = try! Data(contentsOf: URL(fileURLWithPath: codecovFile))
-
-        let codeCoverage = try! Self.jsonDecoder.decode(CodeCov.self, from: data)
+        let codeCoverage: CodeCov
+        var baseCoverage: Aggregate? = nil
+        do {
+            codeCoverage = try openJSON(file: codecovFile, parameterName: "codecov-filepath")
+            if let baseJSONFile {
+                baseCoverage = try openJSON(file: baseJSONFile, parameterName: "previous-filepath")
+            }
+        } catch StatsCommandError.fileError(let message) {
+            print(message)
+            throw ExitCode.failure
+        } catch {
+            print("An unexpected error occurred, please check your parameters and try again.")
+            throw ExitCode.failure
+        }
 
         let aggregateCoverage: Aggregate
         do {
@@ -148,8 +180,12 @@ struct StatsCommand: ParsableCommand {
                 includeDependencies: includeDependencies,
                 includeTests: includeTests,
                 excludeRegexString: excludeRegexString,
-                projectName: projectName
+                projectName: projectName,
+                fromBase: baseCoverage
             )
+        } catch AggregateError.invalidBaseAggregate(let baseMetric) {
+            print("The file specified at `previous-filepath` was run with metric `\(baseMetric)` which is different from `\(metric)`.")
+            throw ExitCode.failure
         } catch {
             if printFormat == .json {
                 print("{}")
@@ -165,20 +201,53 @@ struct StatsCommand: ParsableCommand {
             print("")
             print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
         }
+        
 
-        let passed = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
+        let passedMinimumCoverage = aggregateCoverage.overallCoveragePercent > Double(minimumCov)
 
-        if !passed && printFormat != .json && explainFailure {
+        if !passedMinimumCoverage && printFormat != .json && explainFailure {
             // we don't print the error message out for the minimal or JSON formats.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
         }
+        
+        let passedNonNegativeCoverageDelta = !failOnNegativeDelta || !aggregateCoverage.coverageDecreased
+        
+        if !passedNonNegativeCoverageDelta && explainFailure {
+            // we don't print the error message out for the minimal or JSON formats.
+            print("")
+            let filePath: String
+            if let baseJSONFile {
+                filePath = " located at \(baseJSONFile)"
+            } else {
+                filePath = ""
+            }
+            print("The overall coverage has gone down relative to the base JSON file\(filePath)")
+        }
 
         printResults(aggregateCoverage)
 
-        guard passed else {
+        guard passedMinimumCoverage && passedNonNegativeCoverageDelta else {
             throw ExitCode.failure
         }
+    }
+    
+    func openJSON<T: Decodable>(file: String, parameterName: String) throws -> T {
+        let data: Data
+        do {
+            data = try Data(contentsOf: URL(fileURLWithPath: file))
+        } catch {
+            throw StatsCommandError.fileError("The `\(parameterName)` file `\(file)` could not be found or opened.")
+        }
+
+        let result: T
+        do {
+            result = try Self.jsonDecoder.decode(T.self, from: data)
+        } catch {
+            throw StatsCommandError.fileError("The file `\(file)` specified for `\(parameterName)` does not appear to be in the expected JSON format.")
+        }
+        
+        return result
     }
 }
 
@@ -198,63 +267,56 @@ extension StatsCommand {
     }
 
     func printMinimal(_ aggregateCoverage: Aggregate) {
-        print(aggregateCoverage.formattedOverallCoveragePercent)
+        print(aggregateCoverage.minimalDisplay)
     }
     
     func printNumeric(_ aggregateCoverage: Aggregate) {
-        print(aggregateCoverage.overallCoveragePercent)
+        print(aggregateCoverage.numericDisplay)
     }
 
     func printTable(_ aggregateCoverage: Aggregate) {
         
         print("")
-        print("Overall Coverage: \(aggregateCoverage.formattedOverallCoveragePercent)")
+        print("Overall Coverage: \(aggregateCoverage.minimalDisplay)")
         print("")
-
-        typealias CoverageTriple = (dependency: Bool, filename: String, coverage: Double)
-
-        let fileCoverages: [CoverageTriple] = aggregateCoverage.coveragePerFile.map {
-            (
-                dependency: isDependencyPath($0.key, projectName: projectName),
-                filename: URL(fileURLWithPath: $0.key).lastPathComponent,
-                coverage: $0.value.percent
-            )
-        }.sorted { $0.filename < $1.filename }
-
-        let sortedCoverage : [CoverageTriple]
-        switch sort {
-        case .filename:
-            // we always sort by filename above, even if we subsequently sort by another field.
-            sortedCoverage = fileCoverages
-        case .coverageAsc:
-            sortedCoverage = fileCoverages.sorted { $0.coverage < $1.coverage }
-        case .coverageDesc:
-            sortedCoverage = fileCoverages.sorted { $0.coverage > $1.coverage }
-        }
-
-        var sourceCoverages = [CoverageTriple]()
-        var testCoverages = [CoverageTriple]()
-        for fileCoverage in sortedCoverage {
-            if fileCoverage.filename.contains("Tests") {
-                testCoverages.append(fileCoverage)
-            } else {
-                sourceCoverages.append(fileCoverage)
-            }
-        }
-        let blankTriple: CoverageTriple = (false, "", -1)
-        let dividerTriple: CoverageTriple = (false, "=-=-=-=-=-=-=-=-=", -1)
-
-        let table = TextTable<CoverageTriple> {
-            return [
-                self.includeDependencies
-                    ? Column(title: "Dependency?", value: $0.dependency ? "✓" : "", align: .center)
-                    : nil,
-                Column(title: "File", value: $0.filename),
-                Column(title: "Coverage", value: $0.coverage >= 0 ? "\(String(format: "%.2f", $0.coverage))%" : ""),
+        
+        let tableData = aggregateCoverage.asTableData(
+            includeDependencies: includeDependencies,
+            projectName: projectName,
+            sortOrder: sort
+        )
+        
+        let table = TextTable<CoverageTableRow> { coverageTableRow in
+            [
+                Column(
+                    title: "Dependency?",
+                    value: coverageTableRow.isDependencyString,
+                    align: .center
+                )
+                .includeIf(includeDependencies),
+                
+                Column(
+                    title: "File",
+                    value: coverageTableRow.filename
+                ),
+                
+                Column(
+                    title: "Coverage",
+                    value: coverageTableRow.coverageString,
+                    align: .right
+                ),
+                
+                Column(
+                    title: "Coverage Change",
+                    value: coverageTableRow.coverageDeltaString,
+                    align: .right
+                )
+                .includeIf(aggregateCoverage.hasDeltas),
+                
             ].compactMap { $0 }
         }
 
-        table.print(sourceCoverages + [blankTriple, dividerTriple, blankTriple] + testCoverages, style: Simple.self)
+        table.print(tableData.splitOutTests(), style: Simple.self)
     }
 
     func printJson(_ aggregateCoverage: Aggregate) {

@@ -8,6 +8,7 @@ let package = Package(
     products: [
         .executable(name: "swift-test-codecov", targets: ["swift-test-codecov"]),
         .library(name: "SwiftTestCodecovLib", targets: ["SwiftTestCodecovLib"]),
+        .library(name: "SwiftTestCodecovLogic", targets: ["SwiftTestCodecovLogic"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.3.1")),
@@ -19,11 +20,16 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "swift-test-codecov",
-            dependencies: ["SwiftTestCodecovLib", "ArgumentParser", "TextTable"]
+            dependencies: ["SwiftTestCodecovLib", "SwiftTestCodecovLogic", "ArgumentParser", "TextTable"]
+        ),
+        // Executable targets are not unit testable so this target is necessary to unit test the executable's logic
+        .target(
+            name: "SwiftTestCodecovLogic",
+            dependencies: ["SwiftTestCodecovLib", "TextTable"]
         ),
         .testTarget(
-            name: "swift-test-codecovTests",
-            dependencies: ["swift-test-codecov"]
+            name: "SwiftTestCodecovLogicTests",
+            dependencies: ["SwiftTestCodecovLogic", "SwiftTestCodecovLib"]
         ),
         .target(
             name: "SwiftTestCodecovLib",
