@@ -55,8 +55,20 @@ public struct Aggregate: Codable {
     /// The difference in overallCoverage between this and a different Aggregate provided on initialization.
     public let overallCoverageDelta: Double?
     
+    private let _coveredProperty: CodeCov.AggregateProperty?
+    
     /// The aggregate property that this struct is built on
-    public let coveredProperty: CodeCov.AggregateProperty
+    public var coveredProperty: CodeCov.AggregateProperty { _coveredProperty ?? .lines }
+    
+    enum CodingKeys: String, CodingKey {
+        case coveragePerFile
+        case coverageDeltaPerFile
+        case totalCount
+        case totalCountDelta
+        case overallCoverage
+        case overallCoverageDelta
+        case _coveredProperty = "coveredProperty"
+    }
     
     public init(
         coverage: CodeCov,
@@ -103,10 +115,10 @@ public struct Aggregate: Codable {
             avg + Double(next.value.covered) / Double(total)
         }
         
-        coveredProperty = property
+        _coveredProperty = property
         
         if let base {
-            guard coveredProperty == base.coveredProperty else {
+            guard property == base.coveredProperty else {
                 throw AggregateError.invalidBaseAggregate(base.coveredProperty.rawValue)
             }
             coverageDeltaPerFile = coveragePerFile.delta(base.coveragePerFile)
@@ -137,7 +149,7 @@ extension Aggregate {
         self.totalCountDelta = totalCountDelta
         self.overallCoverage = overallCoverage
         self.overallCoverageDelta = overallCoverageDelta
-        self.coveredProperty = coveredProperty
+        self._coveredProperty = coveredProperty
     }
     
 }
