@@ -76,7 +76,9 @@ public struct Aggregate: Encodable {
         coveragePerFile = coverage
             .fileCoverages(for: property)
             .filter { filename, _ in
-                includeDependencies ? true : !isDependencyPath(filename, projectName: projectName) && !isExcludedPath(filename, regex: regex)
+                let included = includeDependencies ? true : !isDependencyPath(filename, projectName: projectName)
+                let notExcludedByRegex = !isExcludedPath(filename, regex: regex)
+                return included && notExcludedByRegex
             }
 
         let total = coveragePerFile.reduce(0) { tot, next in
