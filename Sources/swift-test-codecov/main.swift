@@ -154,7 +154,7 @@ struct StatsCommand: ParsableCommand {
             if printFormat == .json {
                 print("{}")
             } else {
-                print("Invalid `exclude-path` unable to parse '\(String(describing: excludeRegexString))' as regular expression.")
+                print("Invalid `exclude-path`: unable to parse '\(String(describing: excludeRegexString))' as regular expression.")
             }
             throw ExitCode.failure
         }
