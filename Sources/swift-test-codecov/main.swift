@@ -108,6 +108,16 @@ struct StatsCommand: ParsableCommand {
     )
     var includeTests: Bool = false
     
+    @Option(
+        name: [.customLong("exclude-path"), .customShort("x")],
+        help: ArgumentHelp(
+            "Regex pattern of full file paths to exclude in coverage calculation.",
+            discussion: "If specified, used to determine which source files being tested should be excluded. (Example value \"View\\.swift|Mock\\.swift\" excludes all files with names ending with `View` or `Mock`.)\n\nIf the regular expression cannot be parsed by the system, the application will exit with code 1. An error message will be printed unless the `print-format` is set to `json`, in which case an empty object (`{}`) will be printed.",
+            valueName: "regex"
+        )
+    )
+    var excludeRegexString: String?
+    
     @Flag(
         name: [.customLong("warn-missing-tests")],
         inversion: .prefixedNo,
@@ -130,13 +140,24 @@ struct StatsCommand: ParsableCommand {
 
         let codeCoverage = try! Self.jsonDecoder.decode(CodeCov.self, from: data)
 
-        let aggregateCoverage = Aggregate(
-            coverage: codeCoverage,
-            property: aggProperty,
-            includeDependencies: includeDependencies,
-            includeTests: includeTests,
-            projectName: projectName
-        )
+        let aggregateCoverage: Aggregate
+        do {
+            aggregateCoverage = try Aggregate(
+                coverage: codeCoverage,
+                property: aggProperty,
+                includeDependencies: includeDependencies,
+                includeTests: includeTests,
+                excludeRegexString: excludeRegexString,
+                projectName: projectName
+            )
+        } catch {
+            if printFormat == .json {
+                print("{}")
+            } else {
+                print("Invalid `exclude-path`: unable to parse '\(String(describing: excludeRegexString))' as regular expression.")
+            }
+            throw ExitCode.failure
+        }
 
         if aggregateCoverage.totalCount == 0 && printFormat != .json && warnMissingTests {
             print("")

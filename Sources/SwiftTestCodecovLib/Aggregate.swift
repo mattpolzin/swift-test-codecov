@@ -5,6 +5,7 @@
 //
 
 import Foundation
+import Regex
 
 public func isDependencyPath(_ path: String, projectName: String? = nil) -> Bool {
     let projectDir: String
@@ -16,6 +17,13 @@ public func isDependencyPath(_ path: String, projectName: String? = nil) -> Bool
     }
     let isLocalDependency = projectDir != "" && !path.contains(projectDir)
     return isLocalDependency || path.contains(".build/")
+}
+
+public func isExcludedPath(_ path: String, regex: Regex?) -> Bool {
+    guard let regex else {
+        return false
+    }
+    return regex.matches(path)
 }
 
 public struct Aggregate: Encodable {
@@ -43,9 +51,12 @@ public struct Aggregate: Encodable {
         property: CodeCov.AggregateProperty,
         includeDependencies: Bool,
         includeTests: Bool,
+        excludeRegexString: String?,
         projectName: String? = nil
-    ) {
+    ) throws {
         var coverage = coverage
+        
+        let regex = try Regex(string: excludeRegexString)
 
         if !includeTests {
             var nonTestDataSet = [CodeCov.Data]()
@@ -65,7 +76,9 @@ public struct Aggregate: Encodable {
         coveragePerFile = coverage
             .fileCoverages(for: property)
             .filter { filename, _ in
-                includeDependencies ? true : !isDependencyPath(filename, projectName: projectName)
+                let included = includeDependencies ? true : !isDependencyPath(filename, projectName: projectName)
+                let notExcludedByRegex = !isExcludedPath(filename, regex: regex)
+                return included && notExcludedByRegex
             }
 
         let total = coveragePerFile.reduce(0) { tot, next in
@@ -77,4 +90,15 @@ public struct Aggregate: Encodable {
             avg + Double(next.value.covered) / Double(total)
         }
     }
+}
+
+extension Regex {
+    
+    init?(string: String?) throws {
+        guard let string else {
+            return nil
+        }
+        try self.init(string: string)
+    }
+    
 }
