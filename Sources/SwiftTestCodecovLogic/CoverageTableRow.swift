@@ -35,6 +35,8 @@ public extension CoverageTableRow {
             return ""
         }
         switch delta {
+        case .noChange:
+            return "-"
         case .fileRemoved:
             return "(Removed)"
         case .fileAdded(let coverage):

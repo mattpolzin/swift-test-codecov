@@ -22,6 +22,11 @@ final class CoverageTableRowTests: XCTestCase {
             CoverageTableRow.testRow(delta: .fileRemoved).coverageDeltaString,
             "(Removed)"
         )
+        
+        XCTAssertEqual(
+            CoverageTableRow.testRow(delta: .noChange).coverageDeltaString,
+            "-"
+        )
 
         let exampleCoverageDelta = CodeCov.File.Coverage(count: 10, covered: 9)
 
@@ -136,12 +141,14 @@ final class AggregateExtensionTests: XCTestCase {
             "C/C.swift": fileC100,
             "B/B.swift": fileB25,
             "A/A.swift": fileA50,
+            "E/E.swift": fileE75
         ],
         coverageDeltaPerFile: [
             "C/C.swift": fileC100Delta,
             "B/B.swift": fileB25Delta,
             "A/A.swift": fileA50Delta,
-            "D/D.swift": CoverageDelta.fileRemoved
+            "D/D.swift": CoverageDelta.fileRemoved,
+            "E/E.swift": CoverageDelta.noChange
         ],
         totalCount: 7,
         totalCountDelta: 0,
@@ -153,6 +160,7 @@ final class AggregateExtensionTests: XCTestCase {
     static let fileA50 = CodeCov.File.Coverage(count: 2, covered: 1)
     static let fileB25 = CodeCov.File.Coverage(count: 4, covered: 1)
     static let fileC100 = CodeCov.File.Coverage(count: 1, covered: 1)
+    static let fileE75 = CodeCov.File.Coverage(count: 4, covered: 3)
     
     static let fileA50Delta = CodeCov.File.Coverage(count: 2, covered: 1).delta(CodeCov.File.Coverage(count: 2, covered: 0))
     static let fileB25Delta = CodeCov.File.Coverage(count: 4, covered: 1).delta(CodeCov.File.Coverage(count: 4, covered: 0))
@@ -218,7 +226,8 @@ final class AggregateExtensionTests: XCTestCase {
             .testRow(filename: "A.swift", coverage: 50, delta: Self.fileA50Delta),
             .testRow(filename: "B.swift", coverage: 25, delta: Self.fileB25Delta),
             .testRow(filename: "C.swift", coverage: 100, delta: Self.fileC100Delta),
-            .testRow(filename: "D.swift", coverage: -1, delta: .fileRemoved)
+            .testRow(filename: "D.swift", coverage: -1, delta: .fileRemoved),
+            .testRow(filename: "E.swift", coverage: 75, delta: .noChange),
         ])
         
     }
@@ -252,6 +261,7 @@ final class AggregateExtensionTests: XCTestCase {
             .testRow(dependency: false, filename: "B.swift", coverage: 25, delta: Self.fileB25Delta),
             .testRow(dependency: true, filename: "C.swift", coverage: 100, delta: Self.fileC100Delta),
             .testRow(dependency: true, filename: "D.swift", coverage: -1, delta: .fileRemoved),
+            .testRow(dependency: true, filename: "E.swift", coverage: 75, delta: .noChange),
         ])
         
     }

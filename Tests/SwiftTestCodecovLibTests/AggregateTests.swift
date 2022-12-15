@@ -281,7 +281,7 @@ final class String_CodeCovFileCoverage_Dictionary_ExtensionTests: XCTestCase {
         let delta = cut.delta(base)
         
         XCTAssertEqual(delta, [
-            "Filename.swift": .fileAdded(
+            "Filename.swift": .fileAdded(newCoverage:
                 CodeCov.File.Coverage(
                     count: 10,
                     covered: 9,
@@ -311,7 +311,7 @@ final class String_CodeCovFileCoverage_Dictionary_ExtensionTests: XCTestCase {
         
     }
     
-    func testEqualDelta() throws {
+    func testNoChangeDelta() throws {
         
         let cut = [
             "Filename.swift": CodeCov.File.Coverage(
@@ -331,11 +331,36 @@ final class String_CodeCovFileCoverage_Dictionary_ExtensionTests: XCTestCase {
         let delta = cut.delta(base)
         
         XCTAssertEqual(delta, [
-            "Filename.swift": .delta(
+            "Filename.swift": .noChange
+        ])
+        
+    }
+    
+    func testNoPercentageChangeDelta() throws {
+        
+        let cut = [
+            "Filename.swift": CodeCov.File.Coverage(
+                count: 100,
+                covered: 90,
+                percent: 0.9
+            )
+        ]
+        let base = [
+            "Filename.swift": CodeCov.File.Coverage(
+                count: 10,
+                covered: 9,
+                percent: 0.9
+            )
+        ]
+        
+        let delta = cut.delta(base)
+        
+        XCTAssertEqual(delta, [
+            "Filename.swift": .delta(coverageChange:
                 CodeCov.File.Coverage(
-                    count: 0,
-                    covered: 0,
-                    percent: 0
+                    count: 90,
+                    covered: 81,
+                    percent: 0.0
                 )
             )
         ])
@@ -372,20 +397,14 @@ final class String_CodeCovFileCoverage_Dictionary_ExtensionTests: XCTestCase {
         let delta = cut.delta(base)
         
         XCTAssertEqual(delta, [
-            "FilenameAdded.swift": .fileAdded(
+            "FilenameAdded.swift": .fileAdded(newCoverage:
                 CodeCov.File.Coverage(
                     count: 100,
                     covered: 90,
                     percent: 0.9
                 )
             ),
-            "Filename.swift": .delta(
-                CodeCov.File.Coverage(
-                    count: 0,
-                    covered: 0,
-                    percent: 0
-                )
-            ),
+            "Filename.swift": .noChange,
             "FilenameRemoved.swift": .fileRemoved,
         ])
         
@@ -405,7 +424,7 @@ final class CodeCovFileCoverageExtensionTests: XCTestCase {
         
         let result = cut.delta(nil)
         
-        XCTAssertEqual(result, .fileAdded(
+        XCTAssertEqual(result, .fileAdded(newCoverage:
             CodeCov.File.Coverage(
                 count: 100,
                 covered: 75,
@@ -431,13 +450,7 @@ final class CodeCovFileCoverageExtensionTests: XCTestCase {
         
         let result = cut.delta(base)
         
-        XCTAssertEqual(result, .delta(
-            CodeCov.File.Coverage(
-                count: 0,
-                covered: 0,
-                percent: 0
-            )
-        ))
+        XCTAssertEqual(result, .noChange)
         
     }
     
