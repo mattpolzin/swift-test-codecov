@@ -27,9 +27,9 @@ public func isExcludedPath(_ path: String, regex: Regex?) -> Bool {
 }
 
 public enum CoverageDelta: Codable, Equatable {
-    case fileAdded(CodeCov.File.Coverage)
+    case fileAdded(newCoverage: CodeCov.File.Coverage)
     case fileRemoved
-    case delta(CodeCov.File.Coverage)
+    case delta(coverageChange: CodeCov.File.Coverage)
 }
 
 public enum AggregateError: Error, Equatable {
@@ -219,10 +219,10 @@ extension CodeCov.File.Coverage {
     
     func delta(_ base: CodeCov.File.Coverage?) -> CoverageDelta {
         guard let base else {
-            return .fileAdded(self)
+            return .fileAdded(newCoverage: self)
         }
         
-        return .delta(CodeCov.File.Coverage(
+        return .delta(coverageChange: CodeCov.File.Coverage(
             count: count - base.count,
             covered: covered - base.covered,
             percent: percent - base.percent

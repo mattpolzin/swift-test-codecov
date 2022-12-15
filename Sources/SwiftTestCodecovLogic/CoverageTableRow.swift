@@ -36,7 +36,7 @@ public extension CoverageTableRow {
         }
         switch delta {
         case .fileRemoved:
-            return "X"
+            return "(Removed)"
         case .fileAdded(let coverage):
             return "\(coverage.percent.toTwoPlaces)%"
         case .delta(let coverage):
@@ -83,7 +83,7 @@ public extension Aggregate {
         
         let coverage = coveragePerFile
         let deltas = coverageDeltaPerFile
-        let fileCoverages: [CoverageTableRow] = coverage.map { kvp in
+        var fileCoverages: [CoverageTableRow] = coverage.map { kvp in
             let fileDelta = deltas?[kvp.key]
             return CoverageTableRow(
                 dependency: includeDependencies ? isDependencyPath(kvp.key, projectName: projectName) : nil,
@@ -91,6 +91,16 @@ public extension Aggregate {
                 coverage: kvp.value.percent,
                 delta: hasDeltas ? fileDelta : nil
             )
+        }
+        if let deltas {
+            fileCoverages.append(contentsOf: deltas.filter { $0.value == .fileRemoved }.map { kvp in
+                CoverageTableRow(
+                    dependency: includeDependencies ? isDependencyPath(kvp.key, projectName: projectName) : nil,
+                    filename: URL(fileURLWithPath: kvp.key).lastPathComponent,
+                    coverage: -1,
+                    delta: hasDeltas ? kvp.value : nil
+                )
+            })
         }
 
         let sortedCoverage : [CoverageTableRow]
