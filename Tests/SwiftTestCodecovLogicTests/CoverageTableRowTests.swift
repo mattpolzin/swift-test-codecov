@@ -20,25 +20,25 @@ final class CoverageTableRowTests: XCTestCase {
 
         XCTAssertEqual(
             CoverageTableRow.testRow(delta: .fileRemoved).coverageDeltaString,
-            "X"
+            "(Removed)"
         )
 
         let exampleCoverageDelta = CodeCov.File.Coverage(count: 10, covered: 9)
 
         XCTAssertEqual(
-            CoverageTableRow.testRow(delta: .fileAdded(exampleCoverageDelta)).coverageDeltaString,
+            CoverageTableRow.testRow(delta: .fileAdded(newCoverage: exampleCoverageDelta)).coverageDeltaString,
             "90.00%"
         )
 
         XCTAssertEqual(
-            CoverageTableRow.testRow(delta: .delta(exampleCoverageDelta)).coverageDeltaString,
+            CoverageTableRow.testRow(delta: .delta(coverageChange: exampleCoverageDelta)).coverageDeltaString,
             "+90.00%"
         )
         
         let exampleCoverageDeltaNoChange = CodeCov.File.Coverage(count: 10, covered: 0)
         
         XCTAssertEqual(
-            CoverageTableRow.testRow(delta: .delta(exampleCoverageDeltaNoChange)).coverageDeltaString,
+            CoverageTableRow.testRow(delta: .delta(coverageChange: exampleCoverageDeltaNoChange)).coverageDeltaString,
             "-"
         )
         
@@ -141,6 +141,7 @@ final class AggregateExtensionTests: XCTestCase {
             "C/C.swift": fileC100Delta,
             "B/B.swift": fileB25Delta,
             "A/A.swift": fileA50Delta,
+            "D/D.swift": CoverageDelta.fileRemoved
         ],
         totalCount: 7,
         totalCountDelta: 0,
@@ -217,6 +218,7 @@ final class AggregateExtensionTests: XCTestCase {
             .testRow(filename: "A.swift", coverage: 50, delta: Self.fileA50Delta),
             .testRow(filename: "B.swift", coverage: 25, delta: Self.fileB25Delta),
             .testRow(filename: "C.swift", coverage: 100, delta: Self.fileC100Delta),
+            .testRow(filename: "D.swift", coverage: -1, delta: .fileRemoved)
         ])
         
     }
@@ -249,6 +251,7 @@ final class AggregateExtensionTests: XCTestCase {
             .testRow(dependency: true, filename: "A.swift", coverage: 50, delta: Self.fileA50Delta),
             .testRow(dependency: false, filename: "B.swift", coverage: 25, delta: Self.fileB25Delta),
             .testRow(dependency: true, filename: "C.swift", coverage: 100, delta: Self.fileC100Delta),
+            .testRow(dependency: true, filename: "D.swift", coverage: -1, delta: .fileRemoved),
         ])
         
     }

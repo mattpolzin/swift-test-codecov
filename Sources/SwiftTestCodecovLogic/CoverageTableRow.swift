@@ -98,7 +98,7 @@ public extension Aggregate {
                     dependency: includeDependencies ? isDependencyPath(kvp.key, projectName: projectName) : nil,
                     filename: URL(fileURLWithPath: kvp.key).lastPathComponent,
                     coverage: -1,
-                    delta: hasDeltas ? kvp.value : nil
+                    delta: kvp.value
                 )
             })
         }
