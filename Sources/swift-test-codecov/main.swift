@@ -213,8 +213,8 @@ struct StatsCommand: ParsableCommand {
         
         let passedNonNegativeCoverageDelta = !failOnNegativeDelta || !aggregateCoverage.coverageDecreased
         
-        if !passedNonNegativeCoverageDelta && explainFailure {
-            // we don't print the error message out for the minimal or JSON formats.
+        if !passedNonNegativeCoverageDelta && printFormat != .json && explainFailure {
+            // we don't print the error message out for the JSON format.
             print("")
             let filePath: String
             if let baseJSONFile {
