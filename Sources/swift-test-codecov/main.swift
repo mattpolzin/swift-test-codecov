@@ -206,7 +206,7 @@ struct StatsCommand: ParsableCommand {
         let passedMinimumCoverage = aggregateCoverage.overallCoveragePercent >= Double(minimumCov)
 
         if !passedMinimumCoverage && printFormat != .json && explainFailure {
-            // we don't print the error message out for the minimal or JSON formats.
+            // we don't print the error message out for the JSON format.
             print("")
             print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
         }
