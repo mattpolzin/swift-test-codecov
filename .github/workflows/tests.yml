@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - swift:5.7-bionic
+          - swift:5.7-focal
+          - swift:5.7-jammy
+          - swift:5.7-amazonlinux2
+          - swiftlang/swift:nightly-bionic
+          - swiftlang/swift:nightly-focal
+          - swiftlang/swift:nightly-jammy
+          - swiftlang/swift:nightly-amazonlinux2
+    container: ${{ matrix.image }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Run tests
+      run: swift test
+  osx:
+    runs-on: macOS-12
+    steps:
+      - name: Select latest available Xcode
+        uses: maxim-lobanov/setup-xcode@v1.5.1
+        with:
+          xcode-version: latest
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Run tests
+        run: swift test --enable-test-discovery
