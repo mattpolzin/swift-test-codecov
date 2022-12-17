@@ -12,7 +12,4 @@ jobs:
     - run: swift test --enable-test-discovery --enable-code-coverage
     - id: analysis
       uses: mattpolzin/swift-codecov-action@0.7.1
-      with:
-        MINIMUM_COVERAGE: 0
-        INCLUDE_TESTS: 'true'
 

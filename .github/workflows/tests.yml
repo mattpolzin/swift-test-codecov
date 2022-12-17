@@ -13,15 +13,15 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - swift:5.7-xenial
           - swift:5.7-bionic
           - swift:5.7-focal
-          - swift:5.7-centos8
+          - swift:5.7-jammy
+          - swift:5.7-centos7
           - swift:5.7-amazonlinux2
-          - swiftlang/swift:nightly-xenial
           - swiftlang/swift:nightly-bionic
           - swiftlang/swift:nightly-focal
-          - swiftlang/swift:nightly-centos8
+          - swiftlang/swift:nightly-jammy
+          - swiftlang/swift:nightly-centos7
           - swiftlang/swift:nightly-amazonlinux2
     container: ${{ matrix.image }}
     steps:
@@ -33,7 +33,7 @@ jobs:
     runs-on: macOS-11
     steps:
       - name: Select latest available Xcode
-        uses: maxim-lobanov/setup-xcode@v1.2.3
+        uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
           xcode-version: latest
       - name: Checkout code
