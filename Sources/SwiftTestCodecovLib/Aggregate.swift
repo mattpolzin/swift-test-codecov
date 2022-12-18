@@ -26,11 +26,59 @@ public func isExcludedPath(_ path: String, regex: Regex?) -> Bool {
     return regex.matches(path)
 }
 
-public enum CoverageDelta: Codable, Equatable {
+public enum CoverageDelta: Equatable {
     case noChange
     case fileAdded(newCoverage: CodeCov.File.Coverage)
     case fileRemoved
     case delta(coverageChange: CodeCov.File.Coverage)
+}
+
+extension CoverageDelta: Codable {
+    private enum CodingKeys: CodingKey {
+        case mod
+        case delta
+    }
+    private enum ModKey: String, Codable {
+        case noChange
+        case fileAdded
+        case fileRemoved
+        case fileChanged
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        switch self {
+        case .noChange:
+            try container.encode(ModKey.noChange, forKey: .mod)
+        case .fileRemoved:
+            try container.encode(ModKey.fileRemoved, forKey: .mod)
+        case .fileAdded(newCoverage: let change):
+            try container.encode(ModKey.fileAdded, forKey: .mod)
+            try container.encode(change, forKey: .delta)
+        case .delta(coverageChange: let change):
+            try container.encode(ModKey.fileChanged, forKey: .mod)
+            try container.encode(change, forKey: .delta)
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        let mod = try container.decode(ModKey.self, forKey: .mod)
+        switch mod {
+        case .noChange:
+            self = .noChange
+        case .fileRemoved:
+            self = .fileRemoved
+        case .fileAdded:
+            let delta = try container.decode(CodeCov.File.Coverage.self, forKey: .delta)
+            self = .fileAdded(newCoverage: delta)
+        case .fileChanged:
+            let delta = try container.decode(CodeCov.File.Coverage.self, forKey: .delta)
+            self = .delta(coverageChange: delta)
+        }
+    }
 }
 
 public enum AggregateError: Error, Equatable {
