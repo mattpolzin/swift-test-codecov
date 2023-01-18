@@ -31,7 +31,7 @@ OPTIONS:
         If specified, used to determine which source files being tested are outside of this project (local dependencies).
   -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
-                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+                          The minimum coverage percentage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0.0)
   --explain-failure/--no-explain-failure
                           Determines whether a message will be displayed if the minimum coverage threshold was not met. (The `json` print-format will never display messages and will always be parsable
                           JSON.) (default: true)
