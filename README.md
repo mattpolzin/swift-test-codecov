@@ -31,7 +31,7 @@ OPTIONS:
         If specified, used to determine which source files being tested are outside of this project (local dependencies).
   -m, --metric <metric>   The metric over which to aggregate. One of lines, functions, instantiations (default: lines)
   -v, --minimum <minimum-coverage>
-                          The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0)
+                          The minimum coverage percentage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1. (default: 0.0)
   --fail-on-negative-delta/--no-fail-on-negative-delta
                           When enabled a coverage amount lower than the base will result in exit code 1. (default: false)
         Requires a previous run's JSON file is passed with option `--base-json-file` or will be treated as `false`.

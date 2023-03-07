@@ -66,11 +66,11 @@ struct StatsCommand: ParsableCommand {
     @Option(
         name: [.customLong("minimum"), .customShort("v")],
         help: ArgumentHelp(
-            "The minimum coverage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
+            "The minimum coverage percentage allowed. A value between 0 and 100. Coverage below the minimum will result in exit code 1.",
             valueName: "minimum-coverage"
         )
     )
-    var minimumCoverage: Int = 0
+    var minimumCoverage: Double = 0
     
     @Flag(
         name: [.customLong("fail-on-negative-delta")],
@@ -147,7 +147,7 @@ struct StatsCommand: ParsableCommand {
     var warnMissingTests: Bool = true
     
     func validate() throws {
-        guard (0...100).contains(minimumCoverage) else {
+        if minimumCoverage < 0 || minimumCoverage > 100 {
             throw ValidationError("Minimum coverage must be between 0 and 100 because it represents a percentage.")
         }
     }
@@ -155,7 +155,6 @@ struct StatsCommand: ParsableCommand {
     func run() throws {
 
         let aggProperty: CodeCov.AggregateProperty = metric
-        let minimumCov = minimumCoverage
 
         let codeCoverage: CodeCov
         var baseCoverage: Aggregate? = nil
@@ -202,13 +201,12 @@ struct StatsCommand: ParsableCommand {
             print("Double check that you are either running this tool from the root of your target project or else you've specified a project-name that has the exact name of the root folder of your target project -- otherwise, all files may be filtered out as belonging to other projects (dependencies).")
         }
         
-
         let passedMinimumCoverage = aggregateCoverage.overallCoveragePercent >= Double(minimumCov)
 
         if !passedMinimumCoverage && printFormat != .json && explainFailure {
             // we don't print the error message out for the JSON format.
             print("")
-            print("The overall coverage did not meet the minimum threshold of \(minimumCov)%")
+            print("The overall coverage did not meet the minimum threshold of \(minimumCoverage)%")
         }
         
         let passedNonNegativeCoverageDelta = !failOnNegativeDelta || !aggregateCoverage.coverageDecreased
