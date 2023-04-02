@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "SwiftTestCodecovLib", targets: ["SwiftTestCodecovLib"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", .upToNextMinor(from: "0.3.1")),
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "1.0.0"),
         .package(url: "https://github.com/mattpolzin/TextTable.git", .branch("swift-5")),
         .package(url: "https://github.com/sharplet/Regex.git", .upToNextMinor(from: "2.1.0"))
     ],
